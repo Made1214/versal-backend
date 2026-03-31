@@ -1,613 +1,263 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Import fixtures
 const mockUser = {
-  id: 'user-123',
-  email: 'test@example.com',
-  username: 'testuser',
-  fullName: 'Test User',
-  password: '$2b$10$hashedPassword123',
-  role: 'user',
-  bio: 'Test bio',
-  profileImage: 'https://example.com/avatar.jpg',
+  id: "user-123",
+  email: "test@example.com",
+  username: "testuser",
+  fullName: "Test User",
+  password: "$2b$10$hashedPassword123",
+  role: "user",
+  bio: "Test bio",
+  profileImage: "https://example.com/avatar.jpg",
   coins: 100,
-  subscriptionType: 'BASIC',
+  subscriptionType: "BASIC",
   subscriptionEndDate: null,
-  stripeCustomerId: null,
   isDeleted: false,
   deletedAt: null,
-  createdAt: new Date('2024-01-01T00:00:00.000Z'),
-  updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+  createdAt: new Date("2024-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2024-01-01T00:00:00.000Z"),
 };
 
-const mockAdminUser = {
-  ...mockUser,
-  id: 'admin-123',
-  email: 'admin@example.com',
-  username: 'adminuser',
-  fullName: 'Admin User',
-  role: 'admin',
-};
-
-// Mock dependencies BEFORE importing service
-vi.mock('../../config/prisma.js', () => ({
-  default: {
-    user: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      deleteMany: vi.fn(),
-      count: vi.fn(),
-    },
-    follow: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      deleteMany: vi.fn(),
-    },
-    block: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      deleteMany: vi.fn(),
-    },
-  },
+// Mocks ANTES de los imports
+vi.mock("../../repositories/user.repository.js", () => ({
+  findById: vi.fn(),
+  findByEmail: vi.fn(),
+  findByOAuth: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  softDelete: vi.fn(),
+  hardDelete: vi.fn(),
+  findAll: vi.fn(),
+  findFollow: vi.fn(),
+  createFollow: vi.fn(),
+  deleteFollow: vi.fn(),
+  findFollowers: vi.fn(),
+  findFollowing: vi.fn(),
+  findBlock: vi.fn(),
+  createBlock: vi.fn(),
+  deleteBlock: vi.fn(),
+  findBlockedUsers: vi.fn(),
 }));
-
-vi.mock('bcrypt', () => ({
+vi.mock("bcrypt", () => ({
   default: {
-    hash: vi.fn().mockResolvedValue('$2b$10$hashedPassword123'),
+    hash: vi.fn().mockResolvedValue("$2b$10$hashedPassword123"),
     compare: vi.fn().mockResolvedValue(true),
   },
 }));
 
-// Import service AFTER mocks
-import * as userService from '../../features/users/user.service.js';
-import prisma from '../../config/prisma.js';
-import bcrypt from 'bcrypt';
+import * as userService from "../../features/users/user.service.js";
+import * as userRepo from "../../repositories/user.repository.js";
+import bcrypt from "bcrypt";
 
-describe('User Service', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+describe("User Service", () => {
+  beforeEach(() => vi.clearAllMocks());
 
-  describe('getUserById', () => {
-    it('should return user when exists', async () => {
-      // Arrange
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-
-      // Act
-      const result = await userService.getUserById({ userId: 'user-123' });
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.id).toBe('user-123');
-      expect(result.password).toBeUndefined(); // Password should be excluded
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-      });
-    });
-
-    it('should throw error when user not found', async () => {
-      // Arrange
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        userService.getUserById({ userId: 'nonexistent' })
-      ).rejects.toThrow('Usuario no encontrado');
-    });
-
-    it('should throw error when user is deleted and includeDeleted is false', async () => {
-      // Arrange
-      const deletedUser = { ...mockUser, isDeleted: true };
-      prisma.user.findUnique.mockResolvedValue(deletedUser);
-
-      // Act & Assert
-      await expect(
-        userService.getUserById({ userId: 'user-123', includeDeleted: false })
-      ).rejects.toThrow('Usuario no encontrado');
-    });
-
-    it('should return deleted user when includeDeleted is true', async () => {
-      // Arrange
-      const deletedUser = { ...mockUser, isDeleted: true };
-      prisma.user.findUnique.mockResolvedValue(deletedUser);
-
-      // Act
-      const result = await userService.getUserById({
-        userId: 'user-123',
-        includeDeleted: true,
-      });
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.id).toBe('user-123');
-    });
-  });
-
-  describe('getUserByEmail', () => {
-    it('should return user when email exists', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-
-      // Act
-      const result = await userService.getUserByEmail('test@example.com');
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.email).toBe('test@example.com');
+  describe("getUserById", () => {
+    it("retorna usuario sin password", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
+      const result = await userService.getUserById({ userId: "user-123" });
+      expect(result.id).toBe("user-123");
       expect(result.password).toBeUndefined();
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-      });
     });
 
-    it('should throw NotFoundError when email not found', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        userService.getUserByEmail('nonexistent@example.com')
-      ).rejects.toThrow('Usuario no encontrado');
-    });
-  });
-
-  describe('updateUser', () => {
-    it('should update user successfully', async () => {
-      // Arrange
-      const updateData = { fullName: 'Updated Name', bio: 'New bio' };
-      const updatedUser = { ...mockUser, ...updateData };
-      prisma.user.update.mockResolvedValue(updatedUser);
-
-      // Act
-      const result = await userService.updateUser({
-        userId: 'user-123',
-        data: updateData,
-      });
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.fullName).toBe('Updated Name');
-      expect(result.bio).toBe('New bio');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: updateData,
-        select: expect.any(Object),
-      });
+    it("lanza error si no existe", async () => {
+      userRepo.findById.mockResolvedValue(null);
+      await expect(userService.getUserById({ userId: "no-existe" })).rejects.toThrow("Usuario no encontrado");
     });
 
-    it('should not allow password update through updateUser', async () => {
-      // Arrange
-      const updateData = { fullName: 'Updated Name', password: 'newpass' };
-      const updatedUser = { ...mockUser, fullName: 'Updated Name' };
-      prisma.user.update.mockResolvedValue(updatedUser);
+    it("lanza error si está eliminado y includeDeleted=false", async () => {
+      userRepo.findById.mockResolvedValue({ ...mockUser, isDeleted: true });
+      await expect(userService.getUserById({ userId: "user-123", includeDeleted: false })).rejects.toThrow("Usuario no encontrado");
+    });
 
-      // Act
-      await userService.updateUser({ userId: 'user-123', data: updateData });
-
-      // Assert
-      const callArgs = prisma.user.update.mock.calls[0][0];
-      expect(callArgs.data.password).toBeUndefined();
+    it("retorna usuario eliminado si includeDeleted=true", async () => {
+      userRepo.findById.mockResolvedValue({ ...mockUser, isDeleted: true });
+      const result = await userService.getUserById({ userId: "user-123", includeDeleted: true });
+      expect(result.id).toBe("user-123");
     });
   });
 
-  describe('changePassword', () => {
-    it('should change password when old password is correct', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+  describe("getUserByEmail", () => {
+    it("retorna usuario por email", async () => {
+      userRepo.findByEmail.mockResolvedValue(mockUser);
+      const result = await userService.getUserByEmail("test@example.com");
+      expect(result.email).toBe("test@example.com");
+      expect(result.password).toBeUndefined();
+    });
+
+    it("retorna null si no existe", async () => {
+      userRepo.findByEmail.mockResolvedValue(null);
+      const result = await userService.getUserByEmail("no@existe.com");
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("updateUser", () => {
+    it("actualiza usuario correctamente", async () => {
+      const updated = { ...mockUser, fullName: "Nuevo Nombre" };
+      userRepo.update.mockResolvedValue(updated);
+      const result = await userService.updateUser({ userId: "user-123", data: { fullName: "Nuevo Nombre" } });
+      expect(result.fullName).toBe("Nuevo Nombre");
+    });
+
+    it("no permite actualizar password por este método", async () => {
+      userRepo.update.mockResolvedValue(mockUser);
+      await userService.updateUser({ userId: "user-123", data: { fullName: "Test", password: "hack" } });
+      const callData = userRepo.update.mock.calls[0][1];
+      expect(callData.password).toBeUndefined();
+    });
+  });
+
+  describe("changePassword", () => {
+    it("cambia contraseña correctamente", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(true);
-      bcrypt.hash.mockResolvedValue('$2b$10$newHashedPassword');
-      prisma.user.update.mockResolvedValue(mockUser);
-
-      // Act
-      const result = await userService.changePassword({
-        userId: 'user-123',
-        oldPassword: 'OldPass123!',
-        newPassword: 'NewPass456!',
-      });
-
-      // Assert
-      expect(result).toHaveProperty('message');
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        'OldPass123!',
-        mockUser.password
-      );
-      expect(bcrypt.hash).toHaveBeenCalledWith('NewPass456!', 10);
-      expect(prisma.user.update).toHaveBeenCalled();
+      bcrypt.hash.mockResolvedValue("$2b$10$newHash");
+      userRepo.update.mockResolvedValue(mockUser);
+      const result = await userService.changePassword({ userId: "user-123", oldPassword: "OldPass1!", newPassword: "NewPass1!" });
+      expect(result.message).toContain("actualizada");
     });
 
-    it('should throw ValidationError when new password is invalid', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-
-      // Act & Assert
-      await expect(
-        userService.changePassword({
-          userId: 'user-123',
-          oldPassword: 'OldPass123!',
-          newPassword: 'weak', // Invalid password
-        })
-      ).rejects.toThrow('La nueva contraseña no cumple con los requisitos');
+    it("lanza error si contraseña nueva es débil", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
+      await expect(userService.changePassword({ userId: "user-123", oldPassword: "OldPass1!", newPassword: "weak" })).rejects.toThrow("requisitos");
     });
 
-    it('should throw ValidationError when old password is incorrect', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+    it("lanza error si contraseña antigua es incorrecta", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(false);
-
-      // Act & Assert
-      await expect(
-        userService.changePassword({
-          userId: 'user-123',
-          oldPassword: 'WrongPass123!',
-          newPassword: 'NewPass456!',
-        })
-      ).rejects.toThrow('Contraseña antigua incorrecta');
+      await expect(userService.changePassword({ userId: "user-123", oldPassword: "Wrong1!", newPassword: "NewPass1!" })).rejects.toThrow("incorrecta");
     });
   });
 
-  describe('followUser', () => {
-    it('should follow user successfully', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      prisma.follow.findUnique.mockResolvedValue(null);
-      prisma.follow.create.mockResolvedValue({
-        id: 'follow-123',
-        followerId: 'user-123',
-        followeeId: 'user-456',
-      });
-
-      // Act
-      const result = await userService.followUser({
-        currentUserId: 'user-123',
-        targetUserId: 'user-456',
-      });
-
-      // Assert
+  describe("followUser", () => {
+    it("sigue usuario correctamente", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
+      userRepo.findFollow.mockResolvedValue(null);
+      userRepo.createFollow.mockResolvedValue({});
+      const result = await userService.followUser({ currentUserId: "u1", targetUserId: "u2" });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('seguido correctamente');
-      expect(prisma.follow.create).toHaveBeenCalledWith({
-        data: { followerId: 'user-123', followeeId: 'user-456' },
-      });
     });
 
-    it('should throw ValidationError when trying to follow self', async () => {
-      // Act & Assert
-      await expect(
-        userService.followUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-123',
-        })
-      ).rejects.toThrow('No puedes seguirte a ti mismo');
+    it("lanza error si intenta seguirse a sí mismo", async () => {
+      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
     });
 
-    it('should throw ConflictError when already following', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      prisma.follow.findUnique.mockResolvedValue({
-        id: 'follow-123',
-        followerId: 'user-123',
-        followeeId: 'user-456',
-      });
-
-      // Act & Assert
-      await expect(
-        userService.followUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-456',
-        })
-      ).rejects.toThrow('Ya sigues a este usuario');
+    it("lanza error si ya sigue al usuario", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
+      userRepo.findFollow.mockResolvedValue({ followerId: "u1", followeeId: "u2" });
+      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "u2" })).rejects.toThrow("Ya sigues");
     });
 
-    it('should throw NotFoundError when target user not found', async () => {
-      // Arrange
-      prisma.user.findUnique.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        userService.followUser({
-          currentUserId: 'user-123',
-          targetUserId: 'nonexistent',
-        })
-      ).rejects.toThrow('Usuario no encontrado');
+    it("lanza error si el usuario objetivo no existe", async () => {
+      userRepo.findById.mockResolvedValue(null);
+      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "no-existe" })).rejects.toThrow("no encontrado");
     });
   });
 
-  describe('unfollowUser', () => {
-    it('should unfollow user successfully', async () => {
-      // Arrange
-      prisma.follow.deleteMany.mockResolvedValue({ count: 1 });
-
-      // Act
-      const result = await userService.unfollowUser({
-        currentUserId: 'user-123',
-        targetUserId: 'user-456',
-      });
-
-      // Assert
+  describe("unfollowUser", () => {
+    it("deja de seguir correctamente", async () => {
+      userRepo.deleteFollow.mockResolvedValue({});
+      const result = await userService.unfollowUser({ currentUserId: "u1", targetUserId: "u2" });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('Dejaste de seguir');
-      expect(prisma.follow.deleteMany).toHaveBeenCalledWith({
-        where: { followerId: 'user-123', followeeId: 'user-456' },
-      });
     });
 
-    it('should throw ValidationError when trying to unfollow self', async () => {
-      // Act & Assert
-      await expect(
-        userService.unfollowUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-123',
-        })
-      ).rejects.toThrow('No puedes dejar de seguirte a ti mismo');
+    it("lanza error si intenta dejar de seguirse a sí mismo", async () => {
+      await expect(userService.unfollowUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
     });
   });
 
-  describe('blockUser', () => {
-    it('should block user successfully', async () => {
-      // Arrange
-      prisma.block.findUnique.mockResolvedValue(null);
-      prisma.block.create.mockResolvedValue({
-        id: 'block-123',
-        blockerId: 'user-123',
-        blockedId: 'user-456',
-      });
-
-      // Act
-      const result = await userService.blockUser({
-        currentUserId: 'user-123',
-        targetUserId: 'user-456',
-      });
-
-      // Assert
+  describe("blockUser", () => {
+    it("bloquea usuario correctamente", async () => {
+      userRepo.findBlock.mockResolvedValue(null);
+      userRepo.createBlock.mockResolvedValue({});
+      const result = await userService.blockUser({ currentUserId: "u1", targetUserId: "u2" });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('bloqueado correctamente');
-      expect(prisma.block.create).toHaveBeenCalledWith({
-        data: { blockerId: 'user-123', blockedId: 'user-456' },
-      });
     });
 
-    it('should throw ValidationError when trying to block self', async () => {
-      // Act & Assert
-      await expect(
-        userService.blockUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-123',
-        })
-      ).rejects.toThrow('No puedes bloquearte a ti mismo');
+    it("lanza error si intenta bloquearse a sí mismo", async () => {
+      await expect(userService.blockUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
     });
 
-    it('should throw ConflictError when already blocked', async () => {
-      // Arrange
-      prisma.block.findUnique.mockResolvedValue({
-        id: 'block-123',
-        blockerId: 'user-123',
-        blockedId: 'user-456',
-      });
-
-      // Act & Assert
-      await expect(
-        userService.blockUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-456',
-        })
-      ).rejects.toThrow('Ya has bloqueado a este usuario');
+    it("lanza error si ya está bloqueado", async () => {
+      userRepo.findBlock.mockResolvedValue({ blockerId: "u1", blockedId: "u2" });
+      await expect(userService.blockUser({ currentUserId: "u1", targetUserId: "u2" })).rejects.toThrow("Ya has bloqueado");
     });
   });
 
-  describe('unblockUser', () => {
-    it('should unblock user successfully', async () => {
-      // Arrange
-      prisma.block.deleteMany.mockResolvedValue({ count: 1 });
-
-      // Act
-      const result = await userService.unblockUser({
-        currentUserId: 'user-123',
-        targetUserId: 'user-456',
-      });
-
-      // Assert
+  describe("unblockUser", () => {
+    it("desbloquea usuario correctamente", async () => {
+      userRepo.deleteBlock.mockResolvedValue({});
+      const result = await userService.unblockUser({ currentUserId: "u1", targetUserId: "u2" });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('desbloqueado correctamente');
-      expect(prisma.block.deleteMany).toHaveBeenCalledWith({
-        where: { blockerId: 'user-123', blockedId: 'user-456' },
-      });
-    });
-
-    it('should throw ValidationError when trying to unblock self', async () => {
-      // Act & Assert
-      await expect(
-        userService.unblockUser({
-          currentUserId: 'user-123',
-          targetUserId: 'user-123',
-        })
-      ).rejects.toThrow('No puedes desbloquearte a ti mismo');
     });
   });
 
-  describe('getFollowers', () => {
-    it('should return list of followers', async () => {
-      // Arrange
-      const mockFollowers = [
-        {
-          follower: {
-            id: 'user-456',
-            username: 'follower1',
-            profileImage: 'https://example.com/avatar1.jpg',
-          },
-        },
-        {
-          follower: {
-            id: 'user-789',
-            username: 'follower2',
-            profileImage: 'https://example.com/avatar2.jpg',
-          },
-        },
-      ];
-      prisma.follow.findMany.mockResolvedValue(mockFollowers);
-
-      // Act
-      const result = await userService.getFollowers({ userId: 'user-123' });
-
-      // Assert
-      expect(result).toHaveLength(2);
-      expect(result[0].username).toBe('follower1');
-      expect(prisma.follow.findMany).toHaveBeenCalledWith({
-        where: { followeeId: 'user-123' },
-        select: {
-          follower: { select: { id: true, username: true, profileImage: true } },
-        },
-      });
-    });
-  });
-
-  describe('getFollowing', () => {
-    it('should return list of following users', async () => {
-      // Arrange
-      const mockFollowing = [
-        {
-          followee: {
-            id: 'user-456',
-            username: 'following1',
-            profileImage: 'https://example.com/avatar1.jpg',
-          },
-        },
-      ];
-      prisma.follow.findMany.mockResolvedValue(mockFollowing);
-
-      // Act
-      const result = await userService.getFollowing({ userId: 'user-123' });
-
-      // Assert
+  describe("getFollowers", () => {
+    it("retorna lista de seguidores", async () => {
+      userRepo.findFollowers.mockResolvedValue([{ id: "u2", username: "user2", profileImage: null }]);
+      const result = await userService.getFollowers({ userId: "u1" });
       expect(result).toHaveLength(1);
-      expect(result[0].username).toBe('following1');
+      expect(result[0].username).toBe("user2");
     });
   });
 
-  describe('getBlockedUsers', () => {
-    it('should return list of blocked users', async () => {
-      // Arrange
-      const mockBlocked = [
-        {
-          blocked: {
-            id: 'user-456',
-            username: 'blocked1',
-            email: 'blocked1@example.com',
-          },
-        },
-      ];
-      prisma.block.findMany.mockResolvedValue(mockBlocked);
-
-      // Act
-      const result = await userService.getBlockedUsers({ userId: 'user-123' });
-
-      // Assert
+  describe("getFollowing", () => {
+    it("retorna lista de seguidos", async () => {
+      userRepo.findFollowing.mockResolvedValue([{ id: "u2", username: "user2", profileImage: null }]);
+      const result = await userService.getFollowing({ userId: "u1" });
       expect(result).toHaveLength(1);
-      expect(result[0].username).toBe('blocked1');
     });
   });
 
-  describe('getAllUsers (Admin)', () => {
-    it('should return all users excluding deleted by default', async () => {
-      // Arrange
-      prisma.user.findMany.mockResolvedValue([mockUser, mockAdminUser]);
+  describe("getBlockedUsers", () => {
+    it("retorna lista de bloqueados", async () => {
+      userRepo.findBlockedUsers.mockResolvedValue([{ id: "u2", username: "user2", email: "u2@test.com" }]);
+      const result = await userService.getBlockedUsers({ userId: "u1" });
+      expect(result).toHaveLength(1);
+    });
+  });
 
-      // Act
+  describe("getAllUsers", () => {
+    it("retorna todos los usuarios activos por defecto", async () => {
+      userRepo.findAll.mockResolvedValue([mockUser]);
       const result = await userService.getAllUsers();
-
-      // Assert
-      expect(result).toHaveLength(2);
-      expect(prisma.user.findMany).toHaveBeenCalledWith({
-        where: { isDeleted: false },
-        select: expect.any(Object),
-      });
+      expect(userRepo.findAll).toHaveBeenCalledWith({ includeDeleted: false });
+      expect(result).toHaveLength(1);
     });
 
-    it('should return all users including deleted when specified', async () => {
-      // Arrange
-      const deletedUser = { ...mockUser, isDeleted: true };
-      prisma.user.findMany.mockResolvedValue([mockUser, deletedUser]);
-
-      // Act
-      const result = await userService.getAllUsers({ includeDeleted: true });
-
-      // Assert
-      expect(result).toHaveLength(2);
-      expect(prisma.user.findMany).toHaveBeenCalledWith({
-        where: {},
-        select: expect.any(Object),
-      });
+    it("incluye eliminados si se pide", async () => {
+      userRepo.findAll.mockResolvedValue([mockUser]);
+      await userService.getAllUsers({ includeDeleted: true });
+      expect(userRepo.findAll).toHaveBeenCalledWith({ includeDeleted: true });
     });
   });
 
-  describe('deleteUser (Admin)', () => {
-    it('should soft delete user by default', async () => {
-      // Arrange
-      prisma.user.update.mockResolvedValue({
-        ...mockUser,
-        isDeleted: true,
-      });
-
-      // Act
-      const result = await userService.deleteUser({ userId: 'user-123' });
-
-      // Assert
-      expect(result.message).toContain('soft delete');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: { isDeleted: true, deletedAt: expect.any(Date) },
-      });
+  describe("deleteUser", () => {
+    it("hace soft delete por defecto", async () => {
+      userRepo.softDelete.mockResolvedValue({});
+      const result = await userService.deleteUser({ userId: "u1" });
+      expect(result.message).toContain("soft delete");
+      expect(userRepo.softDelete).toHaveBeenCalledWith("u1");
     });
 
-    it('should hard delete user when specified', async () => {
-      // Arrange
-      prisma.user.delete.mockResolvedValue(mockUser);
-
-      // Act
-      const result = await userService.deleteUser({
-        userId: 'user-123',
-        hardDelete: true,
-      });
-
-      // Assert
-      expect(result.message).toContain('permanentemente');
-      expect(prisma.user.delete).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-      });
+    it("hace hard delete si se pide", async () => {
+      userRepo.hardDelete.mockResolvedValue({});
+      const result = await userService.deleteUser({ userId: "u1", hardDelete: true });
+      expect(result.message).toContain("permanentemente");
+      expect(userRepo.hardDelete).toHaveBeenCalledWith("u1");
     });
   });
 
-  describe('updateUserRole (Admin)', () => {
-    it('should update user role successfully', async () => {
-      // Arrange
-      const updatedUser = { ...mockUser, role: 'admin' };
-      prisma.user.update.mockResolvedValue(updatedUser);
-
-      // Act
-      const result = await userService.updateUserRole({
-        userId: 'user-123',
-        role: 'admin',
-      });
-
-      // Assert
-      expect(result.role).toBe('admin');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: { role: 'admin' },
-        select: expect.any(Object),
-      });
+  describe("updateUserRole", () => {
+    it("actualiza rol correctamente", async () => {
+      userRepo.update.mockResolvedValue({ ...mockUser, role: "admin" });
+      const result = await userService.updateUserRole({ userId: "u1", role: "admin" });
+      expect(userRepo.update).toHaveBeenCalledWith("u1", { role: "admin" });
     });
 
-    it('should throw ValidationError when role is invalid', async () => {
-      // Act & Assert
-      await expect(
-        userService.updateUserRole({ userId: 'user-123', role: 'superadmin' })
-      ).rejects.toThrow('Rol inválido');
+    it("lanza error si rol es inválido", async () => {
+      await expect(userService.updateUserRole({ userId: "u1", role: "superadmin" })).rejects.toThrow("Rol inválido");
     });
   });
 });

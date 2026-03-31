@@ -1,47 +1,24 @@
-import prisma from "../../config/prisma.js";
+import * as storyRepo from "../../repositories/story.repository.js";
+import * as userRepo from "../../repositories/user.repository.js";
 import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 async function createStory(storyData) {
   const { authorId, category: categoryName, tags: tagNames, ...rest } = storyData;
 
-  const author = await prisma.user.findUnique({ where: { id: authorId } });
+  const author = await userRepo.findById(authorId);
   if (!author) {
     throw new NotFoundError("Autor no encontrado");
   }
 
-  let categoryId = null;
-  if (categoryName) {
-    const category = await prisma.category.findUnique({ where: { name: categoryName } });
-    if (!category) {
-      throw new ValidationError(`Categoria '${categoryName}' no encontrada`);
-    }
-    categoryId = category.id;
-  }
+  const categoryId = await resolveCategoryId(categoryName);
+  const tagIds = await resolveTagIds(tagNames);
 
-  let tagIds = [];
-  if (tagNames && tagNames.length > 0) {
-    const foundTags = await prisma.tag.findMany({ where: { name: { in: tagNames } } });
-    if (foundTags.length !== tagNames.length) {
-      const foundTagNames = foundTags.map((t) => t.name);
-      const missingTag = tagNames.find((t) => !foundTagNames.includes(t));
-      throw new ValidationError(`Tag '${missingTag}' no encontrado`);
-    }
-    tagIds = foundTags.map((t) => t.id);
-  }
-
-  const newStory = await prisma.story.create({
-    data: {
-      ...rest,
-      authorId,
-      categoryId,
-      tags: {
-        create: tagIds.map((tagId) => ({ tagId })),
-      },
-    },
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
+  const newStory = await storyRepo.create({
+    ...rest,
+    authorId,
+    categoryId,
+    tags: {
+      create: tagIds.map((tagId) => ({ tagId })),
     },
   });
 
@@ -49,15 +26,7 @@ async function createStory(storyData) {
 }
 
 async function getStoryById(storyId) {
-  const story = await prisma.story.findUnique({
-    where: { id: storyId },
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
-  });
-
+  const story = await storyRepo.findById(storyId);
   if (!story) {
     throw new NotFoundError("Historia no encontrada");
   }
@@ -71,13 +40,13 @@ async function getAllStories(filters = {}, pagination = {}) {
   const queryConditions = { status: "PUBLISHED", isDeleted: false };
 
   if (filters.categoryName) {
-    const category = await prisma.category.findUnique({ where: { name: filters.categoryName } });
+    const category = await storyRepo.findCategoryByName(filters.categoryName);
     if (!category) return { stories: [], pagination: { page, limit, total: 0, totalPages: 0 } };
     queryConditions.categoryId = category.id;
   }
 
   if (filters.tagName) {
-    const tag = await prisma.tag.findUnique({ where: { name: filters.tagName } });
+    const tag = await storyRepo.findTagByName(filters.tagName);
     if (!tag) return { stories: [], pagination: { page, limit, total: 0, totalPages: 0 } };
     queryConditions.tags = { some: { tagId: tag.id } };
   }
@@ -90,18 +59,8 @@ async function getAllStories(filters = {}, pagination = {}) {
   }
 
   const [stories, total] = await Promise.all([
-    prisma.story.findMany({
-      where: queryConditions,
-      skip,
-      take: limit,
-      orderBy: { updatedAt: "desc" },
-      include: {
-        author: { select: { username: true, profileImage: true } },
-        category: { select: { name: true } },
-        tags: { include: { tag: { select: { name: true } } } },
-      },
-    }),
-    prisma.story.count({ where: queryConditions })
+    storyRepo.findMany(queryConditions, { skip, take: limit }),
+    storyRepo.count(queryConditions)
   ]);
 
   return {
@@ -116,28 +75,12 @@ async function getAllStories(filters = {}, pagination = {}) {
 }
 
 async function getStoriesByAuthor(authorId) {
-  const stories = await prisma.story.findMany({
-    where: { authorId, isDeleted: false },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
-  });
-
+  const stories = await storyRepo.findMany({ authorId, isDeleted: false });
   return stories.map(formatStory);
 }
 
 async function getPublicStoriesByAuthor(authorId) {
-  const stories = await prisma.story.findMany({
-    where: { authorId, status: "PUBLISHED", isDeleted: false },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
-  });
-
+  const stories = await storyRepo.findMany({ authorId, status: "PUBLISHED", isDeleted: false });
   return stories.map(formatStory);
 }
 
@@ -146,35 +89,18 @@ async function updateStory(storyId, updateData) {
   const updatePayload = { ...rest };
 
   if (categoryName) {
-    const category = await prisma.category.findUnique({ where: { name: categoryName } });
-    if (!category) throw new ValidationError(`Categoria '${categoryName}' no encontrada.`);
-    updatePayload.categoryId = category.id;
+    updatePayload.categoryId = await resolveCategoryId(categoryName);
   }
 
   if (tagNames) {
-    const foundTags = await prisma.tag.findMany({ where: { name: { in: tagNames } } });
-    if (foundTags.length !== tagNames.length) {
-      const missingTag = tagNames.find((t) => !foundTags.map((tag) => tag.name).includes(t));
-      throw new ValidationError(`Tag '${missingTag}' no encontrado`);
-    }
-
-    // Eliminar tags antiguos y crear nuevos
-    await prisma.storyTag.deleteMany({ where: { storyId } });
+    const tagIds = await resolveTagIds(tagNames);
+    await storyRepo.deleteStoryTags(storyId);
     updatePayload.tags = {
-      create: foundTags.map((tag) => ({ tagId: tag.id })),
+      create: tagIds.map((tagId) => ({ tagId })),
     };
   }
 
-  const updatedStory = await prisma.story.update({
-    where: { id: storyId },
-    data: updatePayload,
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
-  });
-
+  const updatedStory = await storyRepo.update(storyId, updatePayload);
   if (!updatedStory) {
     throw new NotFoundError("Historia no encontrada");
   }
@@ -183,85 +109,72 @@ async function updateStory(storyId, updateData) {
 }
 
 async function deleteStory(storyId) {
-  const chapters = await prisma.chapter.findMany({
-    where: { storyId },
-    select: { id: true },
-  });
-  const chapterIds = chapters.map((chapter) => chapter.id);
-
-  if (chapterIds.length > 0) {
-    await prisma.comment.deleteMany({
-      where: { chapterId: { in: chapterIds } },
-    });
-  }
-
-  if (chapterIds.length > 0) {
-    await prisma.chapter.deleteMany({ where: { id: { in: chapterIds } } });
-  }
-
-  await prisma.favorite.deleteMany({ where: { storyId } });
-
-  const deletedStory = await prisma.story.delete({
-    where: { id: storyId },
-  });
-
-  if (!deletedStory) {
-    throw new NotFoundError("Historia no encontrada");
-  }
-
+  await storyRepo.remove(storyId);
   return { message: "Historia y todos sus datos asociados fueron eliminados exitosamente." };
 }
 
 async function getStoriesByCategory(categoryName) {
-  const category = await prisma.category.findUnique({ where: { name: categoryName } });
+  const category = await storyRepo.findCategoryByName(categoryName);
   if (!category) {
     return [];
   }
 
-  const stories = await prisma.story.findMany({
-    where: { categoryId: category.id, status: "PUBLISHED", isDeleted: false },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
+  const stories = await storyRepo.findMany({
+    categoryId: category.id,
+    status: "PUBLISHED",
+    isDeleted: false,
   });
 
   return stories.map(formatStory);
 }
 
 async function getStoriesByTag(tagName) {
-  const tag = await prisma.tag.findUnique({ where: { name: tagName } });
+  const tag = await storyRepo.findTagByName(tagName);
   if (!tag) {
     return [];
   }
 
-  const stories = await prisma.story.findMany({
-    where: {
-      tags: { some: { tagId: tag.id } },
-      status: "PUBLISHED",
-      isDeleted: false,
-    },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
+  const stories = await storyRepo.findMany({
+    tags: { some: { tagId: tag.id } },
+    status: "PUBLISHED",
+    isDeleted: false,
   });
 
   return stories.map(formatStory);
 }
 
 async function getAllCategories() {
-  const categories = await prisma.category.findMany();
-  return categories;
+  return await storyRepo.findAllCategories();
 }
 
 async function getAllTags() {
-  const tags = await prisma.tag.findMany();
-  return tags;
+  return await storyRepo.findAllTags();
+}
+
+// Helper functions
+async function resolveCategoryId(categoryName) {
+  if (!categoryName) return null;
+  const category = await storyRepo.findCategoryByName(categoryName);
+  if (!category) throw new ValidationError(`Categoria '${categoryName}' no encontrada`);
+  return category.id;
+}
+
+async function resolveTagIds(tagNames) {
+  if (!tagNames || tagNames.length === 0) return [];
+  const found = await storyRepo.findTagsByNames(tagNames);
+  if (found.length !== tagNames.length) {
+    const missing = tagNames.find((t) => !found.map((f) => f.name).includes(t));
+    throw new ValidationError(`Tag '${missing}' no encontrado`);
+  }
+  return found.map((t) => t.id);
+}
+
+function formatStory(story) {
+  if (!story) return null;
+  return {
+    ...story,
+    tags: story.tags?.map((st) => st.tag) || [],
+  };
 }
 
 export {
@@ -277,12 +190,3 @@ export {
   getAllTags,
   getPublicStoriesByAuthor,
 };
-
-// Helper function to format story response
-function formatStory(story) {
-  if (!story) return null;
-  return {
-    ...story,
-    tags: story.tags?.map((st) => st.tag) || [],
-  };
-}
