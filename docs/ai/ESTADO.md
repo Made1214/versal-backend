@@ -1,7 +1,7 @@
 # 📊 Estado del Proyecto - Versal Backend
 
 > Última actualización: 31/03/2026  
-> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3 (Nice to Have) ⏳
+> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.2 (Nice to Have) ⏳
 
 ---
 
@@ -13,8 +13,9 @@
 4. [Fase 1 - Críticos (100% Completada)](#fase-1---críticos-100-completada)
 5. [Mejoras Adicionales Completadas](#mejoras-adicionales-completadas-31032026)
 6. [Fase 2 - Importantes (Completadas)](#fase-2---importantes-completadas-31032026)
-7. [Fase 3 - Nice to Have (Siguiente)](#fase-3---nice-to-have-siguiente)
-8. [Próximos Pasos](#próximos-pasos)
+7. [Fase 3.1 - Optimizaciones de Código (Completadas)](#fase-31---optimizaciones-de-código-completadas-31032026)
+8. [Fase 3.2 - Nice to Have (Siguiente)](#fase-32---nice-to-have-siguiente)
+9. [Próximos Pasos](#próximos-pasos)
 
 ---
 
@@ -172,13 +173,65 @@ PostgreSQL (Base de datos)
 1. [ ] Separar story.model.js en 3 modelos
 2. [ ] Extraer lógica de upload a util reutilizable
 3. [ ] Transacciones de Prisma para operaciones críticas
-4. [ ] Schemas compartidos con `$ref`
-5. [ ] Auto-loader de rutas
-6. [ ] Repository pattern
-7. [ ] Tests unitarios y de integración completos
-8. [ ] Docker setup
-9. [ ] Inyección de dependencias
-10. [ ] Migrar followers/following a colección separada
+4. [ ] Repository pattern
+5. [ ] Tests unitarios y de integración completos
+6. [ ] Docker setup
+7. [ ] Inyección de dependencias
+8. [ ] Migrar followers/following a colección separada
+
+---
+
+## ✅ Fase 3.1 - Optimizaciones de Código (Completadas 31/03/2026)
+
+### ✅ 1. Schemas Compartidos con `$ref`
+- **Antes**: Schemas duplicados en múltiples módulos
+  - `userBase` definido en `auth.schema.js` y `user.schema.js`
+  - `storyProperties`, `categoryProperties`, `tagProperties` en `story.schema.js`
+  - Headers, parámetros comunes repetidos en cada módulo
+- **Después**: Centralizado en `src/schemas/shared.schema.js`
+  - ✅ `userBase` - Compartido entre auth y user
+  - ✅ `userIdParam` - Parámetro de usuario reutilizable
+  - ✅ `storyProperties`, `categoryProperties`, `tagProperties` - Compartidos
+  - ✅ `authHeaders`, `messageResponse`, `errorResponse` - Comunes
+  - ✅ `paginationQuery`, `idParam` - Reutilizables
+- **Archivos actualizados**:
+  - `src/features/auth/auth.schema.js` - Importa desde shared
+  - `src/features/users/user.schema.js` - Importa desde shared
+  - `src/features/stories/story.schema.js` - Importa desde shared
+  - `src/features/users/user.routes.js` - Usa `userIdParam` en lugar de `userIdParamSchema`
+  - `src/features/stories/story.routes.js` - Usa `authorIdParam` en lugar de `authorIdParamSchema`
+- **Beneficios**:
+  - ✅ DRY (Don't Repeat Yourself) - Un solo lugar para definir schemas
+  - ✅ Mantenimiento más fácil - Cambios en un lugar
+  - ✅ Consistencia garantizada - Todos usan la misma definición
+  - ✅ Menos código duplicado - ~200 líneas eliminadas
+
+### ✅ 2. Auto-loader de Rutas
+- **Antes**: Rutas registradas manualmente en `app.js`
+  - 9 imports de rutas
+  - 9 registros manuales con `fastify.register()`
+  - Necesario actualizar `app.js` cada vez que se agrega una feature
+- **Después**: Auto-loader automático en `src/utils/routeLoader.js`
+  - ✅ Función `loadRoutes()` que escanea `src/features/`
+  - ✅ Carga automáticamente todos los archivos `[feature].routes.js`
+  - ✅ Registra rutas con prefijo automático `/${feature}`
+  - ✅ Logging de rutas cargadas
+  - ✅ Manejo de errores robusto
+- **Cambios en `app.js`**:
+  - ❌ Eliminados 9 imports de rutas
+  - ❌ Eliminados 9 registros manuales de rutas
+  - ✅ Agregado import de `loadRoutes`
+  - ✅ Llamada a `await loadRoutes(fastify, './src/features')` en función `start()`
+- **Beneficios**:
+  - ✅ Escalabilidad - Agregar nuevas features sin tocar `app.js`
+  - ✅ Menos código boilerplate - ~50 líneas eliminadas de `app.js`
+  - ✅ Automático - Detecta nuevas rutas por convención
+  - ✅ Mantenimiento más fácil - Cambios centralizados
+  - ✅ Consistencia - Todas las rutas siguen el mismo patrón
+
+---
+
+## Fase 3.2 - Nice to Have (Siguiente)
 
 ---
 
@@ -187,17 +240,18 @@ PostgreSQL (Base de datos)
 ### ✅ Completado (Hoy)
 ✅ Fase 1 completada - Todos los servicios migrados a Prisma + throw pattern  
 ✅ Mejoras adicionales completadas (7 mejoras)  
-✅ Fase 2 completada - Limpieza y optimización
+✅ Fase 2 completada - Limpieza y optimización  
+✅ Fase 3.1 completada - Schemas compartidos + Auto-loader de rutas
 
-### Próxima Fase (Fase 3 - Nice to Have)
+### Próxima Fase (Fase 3.2 - Nice to Have)
 1. Separar story.model.js en 3 modelos
 2. Extraer lógica de upload a util reutilizable
 3. Transacciones de Prisma para operaciones críticas
-4. Schemas compartidos con `$ref`
-5. Auto-loader de rutas
-6. Repository pattern
-7. Tests unitarios y de integración completos
-8. Docker setup
+4. Repository pattern
+5. Tests unitarios y de integración completos
+6. Docker setup
+7. Inyección de dependencias
+8. Migrar followers/following a colección separada
 
 ---
 
@@ -223,6 +277,6 @@ PostgreSQL (Base de datos)
 
 ---
 
-**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3 (Nice to Have) ⏳  
-**Próximo paso**: Comenzar Fase 3 (Separar story.model.js, extraer lógica de upload, etc.)  
+**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.2 (Nice to Have) ⏳  
+**Próximo paso**: Comenzar Fase 3.2 (Separar story.model.js, extraer lógica de upload, etc.)  
 **Última actualización**: 31/03/2026

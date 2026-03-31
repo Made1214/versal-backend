@@ -10,7 +10,7 @@ import {
   getStoriesByTagSchema,
   getAllCategoriesSchema,
   getAllTagsSchema,
-  authorIdParamSchema,
+  authorIdParam,
 } from "./story.schema.js";
 
 async function storyRoutes(fastify) {
@@ -26,7 +26,7 @@ async function storyRoutes(fastify) {
     "/author/:authorId",
     {
       schema: {
-        params: authorIdParamSchema,
+        params: authorIdParam,
         response: getAuthorStoriesSchema.response,
       },
     },

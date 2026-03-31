@@ -1,66 +1,17 @@
-const storyProperties = {
-  _id: { type: "string" },
-  title: { type: "string" },
-  description: { type: "string" },
-  coverImage: { type: "string", nullable: true },
-  author: {
-    type: "object",
-    properties: {
-      _id: { type: "string" },
-      username: { type: "string" },
-      profileImage: { type: "string" },
-    },
-  },
-  category: {
-    type: "object",
-    properties: {
-      _id: { type: "string" },
-      name: { type: "string" },
-    },
-    nullable: true,
-  },
-  tags: {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        _id: { type: "string" },
-        name: { type: "string" },
-      },
-    },
-  },
-  chapterCount: { type: "number" },
-  status: { type: "string", enum: ["draft", "published", "archived"] },
-  isAdultContent: { type: "boolean" },
-  totalLikes: { type: "number" },
-  createdAt: { type: "string", format: "date-time" },
-  updatedAt: { type: "string", format: "date-time" },
-};
-
-const categoryProperties = {
-  _id: { type: "string" },
-  name: { type: "string" },
-};
-
-const tagProperties = {
-  _id: { type: "string" },
-  name: { type: "string" },
-};
-
-const headers = {
-  type: "object",
-  properties: {
-    authorization: { type: "string" },
-  },
-  required: ["authorization"],
-};
+import {
+  storyProperties,
+  categoryProperties,
+  tagProperties,
+  authorIdParam,
+  authHeaders,
+} from "../../schemas/shared.schema.js";
 
 const createStorySchema = {
   summary: "Crea una nueva historia",
   description:
     'Crea una nueva historia para el usuario autenticado. El estado inicial siempre será "borrador".',
   tags: ["Stories"],
-  headers,
+  headers: authHeaders,
   body: {
     type: "object",
     required: ["title"],
@@ -153,7 +104,7 @@ const getAuthorStoriesSchema = {
   description:
     "Ruta privada que devuelve todas las historias (incluyendo borradores) del usuario que realiza la petición.",
   tags: ["Stories"],
-  headers,
+  headers: authHeaders,
   response: {
     200: {
       description: "Una lista de las historias del autor.",
@@ -175,7 +126,7 @@ const updateStorySchema = {
   summary: "Actualiza una historia",
   description: "Actualiza los detalles de una historia existente. Solo el autor puede hacerlo.",
   tags: ["Stories"],
-  headers,
+  headers: authHeaders,
   params: {
     type: "object",
     properties: { id: { type: "string" } },
@@ -210,7 +161,7 @@ const deleteStorySchema = {
   description:
     "Elimina permanentemente una historia y todos sus capítulos e interacciones asociadas.",
   tags: ["Stories"],
-  headers,
+  headers: authHeaders,
   params: {
     type: "object",
     properties: { id: { type: "string" } },
@@ -335,7 +286,7 @@ const authorIdParamSchema = {
 };
 
 export {
-  authorIdParamSchema,
+  authorIdParam,
   createStorySchema,
   getStoryByIdSchema,
   getAllStoriesSchema,

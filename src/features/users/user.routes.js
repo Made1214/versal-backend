@@ -2,7 +2,7 @@ import * as userController from './user.controller.js';
 import {
   updateProfileSchema,
   changePasswordSchema,
-  userIdParamSchema,
+  userIdParam,
   userBase
 } from './user.schema.js';
 
@@ -10,14 +10,14 @@ async function userRoutes(fastify) {
   // Seguidores
   fastify.get(
     '/:id/followers',
-    { schema: { params: userIdParamSchema } },
+    { schema: { params: userIdParam } },
     userController.getFollowers
   )
 
   //Seguidos
   fastify.get(
     '/:id/following',
-    { schema: { params: userIdParamSchema } },
+    { schema: { params: userIdParam } },
     userController.getFollowing
   )
 
@@ -40,7 +40,7 @@ async function userRoutes(fastify) {
       '/:id',
       {
         schema: {
-          params: userIdParamSchema,
+          params: userIdParam,
           response: {
             200: userBase
           }
@@ -62,25 +62,25 @@ async function userRoutes(fastify) {
     // Interacciones con otros usuarios
     privateRoutes.post(
       '/:id/follow',
-      { schema: { params: userIdParamSchema } },
+      { schema: { params: userIdParam } },
       userController.followUser
     )
 
     privateRoutes.post(
       '/:id/unfollow',
-      { schema: { params: userIdParamSchema } },
+      { schema: { params: userIdParam } },
       userController.unfollowUser
     )
 
     privateRoutes.post(
       '/:id/block',
-      { schema: { params: userIdParamSchema } },
+      { schema: { params: userIdParam } },
       userController.blockUser
     )
 
     privateRoutes.post(
       '/:id/unblock',
-      { schema: { params: userIdParamSchema } },
+      { schema: { params: userIdParam } },
       userController.unblockUser
     )
   })
@@ -99,7 +99,7 @@ async function userRoutes(fastify) {
 
     adminRoutes.delete(
       '/:id',
-      { schema: { params: userIdParamSchema } },
+      { schema: { params: userIdParam } },
       userController.deleteUser
     )
     adminRoutes.put('/:userId/role', userController.updateUserRole)

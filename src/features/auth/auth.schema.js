@@ -1,21 +1,4 @@
-const userBase = {
-  type: "object",
-  properties: {
-    id: { type: "string" },
-    fullName: { type: "string" },
-    username: { type: "string" },
-    email: { type: "string", format: "email" },
-    profileImage: { type: "string", format: "uri", nullable: true },
-    role: { type: "string", enum: ["user", "admin"] },
-    bio: { type: "string", nullable: true },
-    isDeleted: { type: "boolean", default: false },
-    deletedAt: { type: "string", format: "date-time", nullable: true },
-    subscription: { type: "object", properties: {} },
-    followers: { type: "array", items: { type: "string" } },
-    following: { type: "array", items: { type: "string" } },
-    blockedUsers: { type: "array", items: { type: "string" } },
-  },
-};
+import { userBase, authHeaders, messageResponse } from "../../schemas/shared.schema.js";
 
 const loginSchema = {
   body: {
@@ -74,7 +57,7 @@ const forgotPasswordSchema = {
     },
   },
   response: {
-    200: { type: "object", properties: { message: { type: "string" } } },
+    200: messageResponse,
   },
 };
 
@@ -89,7 +72,7 @@ const resetPasswordSchema = {
     },
   },
   response: {
-    200: { type: "object", properties: { message: { type: "string" } } },
+    200: messageResponse,
   },
 };
 
@@ -106,7 +89,7 @@ const meSchema = {
 
 const logoutSchema = {
   response: {
-    200: { type: "object", properties: { message: { type: "string" } } },
+    200: messageResponse,
   },
 };
 
