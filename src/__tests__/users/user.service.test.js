@@ -29,48 +29,45 @@ const mockAdminUser = {
   role: 'admin',
 };
 
-// Create mocks BEFORE any imports
-const mockPrisma = {
-  user: {
-    findUnique: vi.fn(),
-    findMany: vi.fn(),
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    deleteMany: vi.fn(),
-    count: vi.fn(),
-  },
-  follow: {
-    findUnique: vi.fn(),
-    findMany: vi.fn(),
-    create: vi.fn(),
-    deleteMany: vi.fn(),
-  },
-  block: {
-    findUnique: vi.fn(),
-    findMany: vi.fn(),
-    create: vi.fn(),
-    deleteMany: vi.fn(),
-  },
-};
-
-const mockBcrypt = {
-  hash: vi.fn().mockResolvedValue('$2b$10$hashedPassword123'),
-  compare: vi.fn().mockResolvedValue(true),
-};
-
 // Mock dependencies BEFORE importing service
-vi.mock('../../config/prisma', () => ({
-  default: mockPrisma,
+vi.mock('../../config/prisma.js', () => ({
+  default: {
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      count: vi.fn(),
+    },
+    follow: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    block: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+  },
 }));
 
 vi.mock('bcrypt', () => ({
-  default: mockBcrypt,
+  default: {
+    hash: vi.fn().mockResolvedValue('$2b$10$hashedPassword123'),
+    compare: vi.fn().mockResolvedValue(true),
+  },
 }));
 
 // Import service AFTER mocks
-const userService = require('../../features/users/user.service');
+import * as userService from '../../features/users/user.service.js';
+import prisma from '../../config/prisma.js';
+import bcrypt from 'bcrypt';
 
 describe('User Service', () => {
   beforeEach(() => {
@@ -80,7 +77,7 @@ describe('User Service', () => {
   describe('getUserById', () => {
     it('should return user when exists', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
 
       // Act
       const result = await userService.getUserById({ userId: 'user-123' });
@@ -89,14 +86,14 @@ describe('User Service', () => {
       expect(result).toBeDefined();
       expect(result.id).toBe('user-123');
       expect(result.password).toBeUndefined(); // Password should be excluded
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-123' },
       });
     });
 
     it('should throw error when user not found', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
       // Act & Assert
       await expect(
@@ -107,7 +104,7 @@ describe('User Service', () => {
     it('should throw error when user is deleted and includeDeleted is false', async () => {
       // Arrange
       const deletedUser = { ...mockUser, isDeleted: true };
-      mockPrisma.user.findUnique.mockResolvedValue(deletedUser);
+      prisma.user.findUnique.mockResolvedValue(deletedUser);
 
       // Act & Assert
       await expect(
@@ -118,7 +115,7 @@ describe('User Service', () => {
     it('should return deleted user when includeDeleted is true', async () => {
       // Arrange
       const deletedUser = { ...mockUser, isDeleted: true };
-      mockPrisma.user.findUnique.mockResolvedValue(deletedUser);
+      prisma.user.findUnique.mockResolvedValue(deletedUser);
 
       // Act
       const result = await userService.getUserById({
@@ -135,7 +132,7 @@ describe('User Service', () => {
   describe('getUserByEmail', () => {
     it('should return user when email exists', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findUnique.mockResolvedValue(mockUser);
 
       // Act
       const result = await userService.getUserByEmail('test@example.com');
@@ -144,14 +141,14 @@ describe('User Service', () => {
       expect(result).toBeDefined();
       expect(result.email).toBe('test@example.com');
       expect(result.password).toBeUndefined();
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'test@example.com' },
       });
     });
 
     it('should throw NotFoundError when email not found', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
       await expect(
@@ -165,7 +162,7 @@ describe('User Service', () => {
       // Arrange
       const updateData = { fullName: 'Updated Name', bio: 'New bio' };
       const updatedUser = { ...mockUser, ...updateData };
-      mockPrisma.user.update.mockResolvedValue(updatedUser);
+      prisma.user.update.mockResolvedValue(updatedUser);
 
       // Act
       const result = await userService.updateUser({
@@ -177,7 +174,7 @@ describe('User Service', () => {
       expect(result).toBeDefined();
       expect(result.fullName).toBe('Updated Name');
       expect(result.bio).toBe('New bio');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
         data: updateData,
         select: expect.any(Object),
@@ -188,13 +185,13 @@ describe('User Service', () => {
       // Arrange
       const updateData = { fullName: 'Updated Name', password: 'newpass' };
       const updatedUser = { ...mockUser, fullName: 'Updated Name' };
-      mockPrisma.user.update.mockResolvedValue(updatedUser);
+      prisma.user.update.mockResolvedValue(updatedUser);
 
       // Act
       await userService.updateUser({ userId: 'user-123', data: updateData });
 
       // Assert
-      const callArgs = mockPrisma.user.update.mock.calls[0][0];
+      const callArgs = prisma.user.update.mock.calls[0][0];
       expect(callArgs.data.password).toBeUndefined();
     });
   });
@@ -202,10 +199,10 @@ describe('User Service', () => {
   describe('changePassword', () => {
     it('should change password when old password is correct', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockBcrypt.compare.mockResolvedValue(true);
-      mockBcrypt.hash.mockResolvedValue('$2b$10$newHashedPassword');
-      mockPrisma.user.update.mockResolvedValue(mockUser);
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(true);
+      bcrypt.hash.mockResolvedValue('$2b$10$newHashedPassword');
+      prisma.user.update.mockResolvedValue(mockUser);
 
       // Act
       const result = await userService.changePassword({
@@ -216,17 +213,17 @@ describe('User Service', () => {
 
       // Assert
       expect(result).toHaveProperty('message');
-      expect(mockBcrypt.compare).toHaveBeenCalledWith(
+      expect(bcrypt.compare).toHaveBeenCalledWith(
         'OldPass123!',
         mockUser.password
       );
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('NewPass456!', 10);
-      expect(mockPrisma.user.update).toHaveBeenCalled();
+      expect(bcrypt.hash).toHaveBeenCalledWith('NewPass456!', 10);
+      expect(prisma.user.update).toHaveBeenCalled();
     });
 
     it('should throw ValidationError when new password is invalid', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findUnique.mockResolvedValue(mockUser);
 
       // Act & Assert
       await expect(
@@ -240,8 +237,8 @@ describe('User Service', () => {
 
     it('should throw ValidationError when old password is incorrect', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockBcrypt.compare.mockResolvedValue(false);
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(false);
 
       // Act & Assert
       await expect(
@@ -257,9 +254,9 @@ describe('User Service', () => {
   describe('followUser', () => {
     it('should follow user successfully', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.follow.findUnique.mockResolvedValue(null);
-      mockPrisma.follow.create.mockResolvedValue({
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.follow.findUnique.mockResolvedValue(null);
+      prisma.follow.create.mockResolvedValue({
         id: 'follow-123',
         followerId: 'user-123',
         followeeId: 'user-456',
@@ -274,7 +271,7 @@ describe('User Service', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.message).toContain('seguido correctamente');
-      expect(mockPrisma.follow.create).toHaveBeenCalledWith({
+      expect(prisma.follow.create).toHaveBeenCalledWith({
         data: { followerId: 'user-123', followeeId: 'user-456' },
       });
     });
@@ -291,8 +288,8 @@ describe('User Service', () => {
 
     it('should throw ConflictError when already following', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.follow.findUnique.mockResolvedValue({
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.follow.findUnique.mockResolvedValue({
         id: 'follow-123',
         followerId: 'user-123',
         followeeId: 'user-456',
@@ -309,7 +306,7 @@ describe('User Service', () => {
 
     it('should throw NotFoundError when target user not found', async () => {
       // Arrange
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
       await expect(
@@ -324,7 +321,7 @@ describe('User Service', () => {
   describe('unfollowUser', () => {
     it('should unfollow user successfully', async () => {
       // Arrange
-      mockPrisma.follow.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.follow.deleteMany.mockResolvedValue({ count: 1 });
 
       // Act
       const result = await userService.unfollowUser({
@@ -335,7 +332,7 @@ describe('User Service', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.message).toContain('Dejaste de seguir');
-      expect(mockPrisma.follow.deleteMany).toHaveBeenCalledWith({
+      expect(prisma.follow.deleteMany).toHaveBeenCalledWith({
         where: { followerId: 'user-123', followeeId: 'user-456' },
       });
     });
@@ -354,8 +351,8 @@ describe('User Service', () => {
   describe('blockUser', () => {
     it('should block user successfully', async () => {
       // Arrange
-      mockPrisma.block.findUnique.mockResolvedValue(null);
-      mockPrisma.block.create.mockResolvedValue({
+      prisma.block.findUnique.mockResolvedValue(null);
+      prisma.block.create.mockResolvedValue({
         id: 'block-123',
         blockerId: 'user-123',
         blockedId: 'user-456',
@@ -370,7 +367,7 @@ describe('User Service', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.message).toContain('bloqueado correctamente');
-      expect(mockPrisma.block.create).toHaveBeenCalledWith({
+      expect(prisma.block.create).toHaveBeenCalledWith({
         data: { blockerId: 'user-123', blockedId: 'user-456' },
       });
     });
@@ -387,7 +384,7 @@ describe('User Service', () => {
 
     it('should throw ConflictError when already blocked', async () => {
       // Arrange
-      mockPrisma.block.findUnique.mockResolvedValue({
+      prisma.block.findUnique.mockResolvedValue({
         id: 'block-123',
         blockerId: 'user-123',
         blockedId: 'user-456',
@@ -406,7 +403,7 @@ describe('User Service', () => {
   describe('unblockUser', () => {
     it('should unblock user successfully', async () => {
       // Arrange
-      mockPrisma.block.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.block.deleteMany.mockResolvedValue({ count: 1 });
 
       // Act
       const result = await userService.unblockUser({
@@ -417,7 +414,7 @@ describe('User Service', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.message).toContain('desbloqueado correctamente');
-      expect(mockPrisma.block.deleteMany).toHaveBeenCalledWith({
+      expect(prisma.block.deleteMany).toHaveBeenCalledWith({
         where: { blockerId: 'user-123', blockedId: 'user-456' },
       });
     });
@@ -452,7 +449,7 @@ describe('User Service', () => {
           },
         },
       ];
-      mockPrisma.follow.findMany.mockResolvedValue(mockFollowers);
+      prisma.follow.findMany.mockResolvedValue(mockFollowers);
 
       // Act
       const result = await userService.getFollowers({ userId: 'user-123' });
@@ -460,7 +457,7 @@ describe('User Service', () => {
       // Assert
       expect(result).toHaveLength(2);
       expect(result[0].username).toBe('follower1');
-      expect(mockPrisma.follow.findMany).toHaveBeenCalledWith({
+      expect(prisma.follow.findMany).toHaveBeenCalledWith({
         where: { followeeId: 'user-123' },
         select: {
           follower: { select: { id: true, username: true, profileImage: true } },
@@ -481,7 +478,7 @@ describe('User Service', () => {
           },
         },
       ];
-      mockPrisma.follow.findMany.mockResolvedValue(mockFollowing);
+      prisma.follow.findMany.mockResolvedValue(mockFollowing);
 
       // Act
       const result = await userService.getFollowing({ userId: 'user-123' });
@@ -504,7 +501,7 @@ describe('User Service', () => {
           },
         },
       ];
-      mockPrisma.block.findMany.mockResolvedValue(mockBlocked);
+      prisma.block.findMany.mockResolvedValue(mockBlocked);
 
       // Act
       const result = await userService.getBlockedUsers({ userId: 'user-123' });
@@ -518,14 +515,14 @@ describe('User Service', () => {
   describe('getAllUsers (Admin)', () => {
     it('should return all users excluding deleted by default', async () => {
       // Arrange
-      mockPrisma.user.findMany.mockResolvedValue([mockUser, mockAdminUser]);
+      prisma.user.findMany.mockResolvedValue([mockUser, mockAdminUser]);
 
       // Act
       const result = await userService.getAllUsers();
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: { isDeleted: false },
         select: expect.any(Object),
       });
@@ -534,14 +531,14 @@ describe('User Service', () => {
     it('should return all users including deleted when specified', async () => {
       // Arrange
       const deletedUser = { ...mockUser, isDeleted: true };
-      mockPrisma.user.findMany.mockResolvedValue([mockUser, deletedUser]);
+      prisma.user.findMany.mockResolvedValue([mockUser, deletedUser]);
 
       // Act
       const result = await userService.getAllUsers({ includeDeleted: true });
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: {},
         select: expect.any(Object),
       });
@@ -551,7 +548,7 @@ describe('User Service', () => {
   describe('deleteUser (Admin)', () => {
     it('should soft delete user by default', async () => {
       // Arrange
-      mockPrisma.user.update.mockResolvedValue({
+      prisma.user.update.mockResolvedValue({
         ...mockUser,
         isDeleted: true,
       });
@@ -561,7 +558,7 @@ describe('User Service', () => {
 
       // Assert
       expect(result.message).toContain('soft delete');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
         data: { isDeleted: true, deletedAt: expect.any(Date) },
       });
@@ -569,7 +566,7 @@ describe('User Service', () => {
 
     it('should hard delete user when specified', async () => {
       // Arrange
-      mockPrisma.user.delete.mockResolvedValue(mockUser);
+      prisma.user.delete.mockResolvedValue(mockUser);
 
       // Act
       const result = await userService.deleteUser({
@@ -579,7 +576,7 @@ describe('User Service', () => {
 
       // Assert
       expect(result.message).toContain('permanentemente');
-      expect(mockPrisma.user.delete).toHaveBeenCalledWith({
+      expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: 'user-123' },
       });
     });
@@ -589,7 +586,7 @@ describe('User Service', () => {
     it('should update user role successfully', async () => {
       // Arrange
       const updatedUser = { ...mockUser, role: 'admin' };
-      mockPrisma.user.update.mockResolvedValue(updatedUser);
+      prisma.user.update.mockResolvedValue(updatedUser);
 
       // Act
       const result = await userService.updateUserRole({
@@ -599,7 +596,7 @@ describe('User Service', () => {
 
       // Assert
       expect(result.role).toBe('admin');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
         data: { role: 'admin' },
         select: expect.any(Object),

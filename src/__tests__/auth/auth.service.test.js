@@ -21,40 +21,36 @@ vi.mock('crypto', () => ({
 }));
 
 // Mock Prisma - must be done before importing auth.service
-const mockPrisma = {
-  user: {
-    findUnique: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    findFirst: vi.fn(),
+vi.mock('../../config/prisma.js', () => ({
+  default: {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    refreshToken: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    passwordReset: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
   },
-  refreshToken: {
-    create: vi.fn(),
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-  passwordReset: {
-    create: vi.fn(),
-    findFirst: vi.fn(),
-    update: vi.fn(),
-  },
-};
-
-vi.mock('../../config/prisma', () => ({
-  default: mockPrisma,
 }));
 
-vi.mock('../users/user.service', () => ({
-  default: {
-    getUserByEmail: vi.fn(),
-    registerUser: vi.fn(),
-    loginUser: vi.fn(),
-    findOrCreateOAuthUser: vi.fn(),
-  },
+vi.mock('../../features/users/user.service.js', () => ({
+  getUserByEmail: vi.fn(),
+  registerUser: vi.fn(),
+  loginUser: vi.fn(),
+  findOrCreateOAuthUser: vi.fn(),
 }));
 
 // Import after all mocks are set
-const authService = require('../../features/auth/auth.service');
+import * as authService from '../../features/auth/auth.service.js';
 
 describe('auth.service', () => {
   describe('isValidPassword', () => {
