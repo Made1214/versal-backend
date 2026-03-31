@@ -1,4 +1,5 @@
 import * as authController from "./auth.controller.js";
+import authRateLimitPlugin from "../../plugins/authRateLimit.plugin.js";
 import {
   loginSchema,
   registerSchema,
@@ -10,6 +11,9 @@ import {
 } from "./auth.schema.js";
 
 async function authRoutes(fastify) {
+  // Registrar rate limiting específico para auth
+  await fastify.register(authRateLimitPlugin);
+
   fastify.post(
     "/auth/register",
     { schema: registerSchema },

@@ -64,18 +64,21 @@ async function getStoryById(storyId) {
   return formatStory(story);
 }
 
-async function getAllStories(filters = {}) {
+async function getAllStories(filters = {}, pagination = {}) {
+  const { page = 1, limit = 20 } = pagination;
+  const skip = (page - 1) * limit;
+
   const queryConditions = { status: "PUBLISHED", isDeleted: false };
 
   if (filters.categoryName) {
     const category = await prisma.category.findUnique({ where: { name: filters.categoryName } });
-    if (!category) return [];
+    if (!category) return { stories: [], pagination: { page, limit, total: 0, totalPages: 0 } };
     queryConditions.categoryId = category.id;
   }
 
   if (filters.tagName) {
     const tag = await prisma.tag.findUnique({ where: { name: filters.tagName } });
-    if (!tag) return [];
+    if (!tag) return { stories: [], pagination: { page, limit, total: 0, totalPages: 0 } };
     queryConditions.tags = { some: { tagId: tag.id } };
   }
 
@@ -86,17 +89,30 @@ async function getAllStories(filters = {}) {
     ];
   }
 
-  const stories = await prisma.story.findMany({
-    where: queryConditions,
-    orderBy: { updatedAt: "desc" },
-    include: {
-      author: { select: { username: true, profileImage: true } },
-      category: { select: { name: true } },
-      tags: { include: { tag: { select: { name: true } } } },
-    },
-  });
+  const [stories, total] = await Promise.all([
+    prisma.story.findMany({
+      where: queryConditions,
+      skip,
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+      include: {
+        author: { select: { username: true, profileImage: true } },
+        category: { select: { name: true } },
+        tags: { include: { tag: { select: { name: true } } } },
+      },
+    }),
+    prisma.story.count({ where: queryConditions })
+  ]);
 
-  return stories.map(formatStory);
+  return {
+    stories: stories.map(formatStory),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
 }
 
 async function getStoriesByAuthor(authorId) {

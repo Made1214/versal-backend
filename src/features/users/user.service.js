@@ -6,10 +6,15 @@ import {
   ConflictError,
 } from "../../utils/errors.js";
 
-// Validación de contraseña (compartida con auth.service.js)
+// Validación de contraseña
 function isValidPassword(password) {
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z\d]).{8,}$/;
   return regex.test(password);
+}
+
+// Validacion de email
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 // Obtener perfil

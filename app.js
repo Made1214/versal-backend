@@ -9,6 +9,9 @@ const fastify = fastifyLib({ logger: true });
 // Configuración centralizada (valida env vars al cargar)
 import config from './src/config/index.js';
 
+// Importar Prisma
+import prisma from './src/config/prisma.js';
+
 // Importar componentes de infraestructura
 import errorHandler from './src/middlewares/errorHandler.js';
 import corsPlugin from './src/plugins/cors.plugin.js';
@@ -99,6 +102,29 @@ fastify.register(fastifyRawBody, {
 // ============================================
 // REGISTRAR RUTAS
 // ============================================
+
+// Health check endpoint
+fastify.get('/health', async (request, reply) => {
+  try {
+    // Verificar conexión a BD
+    await prisma.$queryRaw`SELECT 1`;
+    
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: 'connected'
+    };
+  } catch (error) {
+    reply.code(503);
+    return {
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error.message
+    };
+  }
+});
 
 // Rutas de auth
 fastify.register(authRoutes, { prefix: '/api' });

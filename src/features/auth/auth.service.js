@@ -23,6 +23,10 @@ async function registerUser({ email, password, username, fullName }) {
     throw new ConflictError("El email ya está en uso.");
   }
 
+  if (!userService.isValidEmail(email)) {
+    throw new ValidationError("El email no es válido.");
+  }
+
   const result = await userService.registerUser({
     email,
     password,

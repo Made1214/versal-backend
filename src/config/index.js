@@ -96,4 +96,10 @@ config.RATE_LIMIT_MAX_NUMBER = parseInt(config.RATE_LIMIT_MAX, 10);
 config.IS_PRODUCTION = config.NODE_ENV === 'production';
 config.IS_DEVELOPMENT = config.NODE_ENV === 'development';
 
+// Validar que Stripe esté completamente configurado o no configurado
+if ((config.STRIPE_SECRET_KEY && !config.STRIPE_WEBHOOK_SECRET) || 
+    (!config.STRIPE_SECRET_KEY && config.STRIPE_WEBHOOK_SECRET)) {
+  throw new Error('STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET deben estar ambas configuradas o ambas ausentes');
+}
+
 export default config;
