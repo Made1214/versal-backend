@@ -10,16 +10,11 @@ async function addInteractionToChapter(request, reply) {
     try {
       requestBody = JSON.parse(requestBody);
     } catch (e) {
-    
       return reply.code(400).send({ message: "Invalid JSON body received." });
     }
   }
 
-
   const { interactionType, text } = requestBody;
-
-  console.log("Request Body recibido (final):", requestBody);
-  console.log("interactionType recibido (final):", interactionType);
 
   const result = await interactionService.addInteractionToChapter({
     chapterId,
@@ -28,9 +23,6 @@ async function addInteractionToChapter(request, reply) {
     text,
   });
 
-  if (result.error) {
-    return reply.code(400).send(result);
-  }
   reply.code(201).send(result);
 }
 
@@ -38,8 +30,6 @@ async function addInteractionToChapter(request, reply) {
 async function getInteractionsForChapter(request, reply) {
   const { id: chapterId } = request.params;
   const result = await interactionService.getInteractionsForChapter(chapterId);
-
-  if (result.error) return reply.code(404).send(result);
   reply.send(result);
 }
 
@@ -54,12 +44,7 @@ async function deleteInteraction(request, reply) {
     userRole: role,
   });
 
-  if (result.error) {
-    const statusCode = result.error.includes("Unauthorized") ? 403 : 404;
-    return reply.code(statusCode).send({ message: result.error });
-  }
-
-  reply.send({ message: "Interaction deleted successfully." });
+  reply.send(result);
 }
 
 module.exports = {

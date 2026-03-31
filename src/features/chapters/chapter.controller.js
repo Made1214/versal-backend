@@ -9,142 +9,75 @@ const { Story } = require("../../models/story.model");
 
 // Controlador para crear un nuevo capítulo
 async function createChapter(request, reply) {
-  try {
-    const { storyId } = request.params;
-    const chapterData = request.body;
+  const { storyId } = request.params;
+  const chapterData = request.body;
+  const authorId = request.user.userId;
 
-    const authorId = request.user._id;
+  const result = await chapterService.createChapter({
+    ...chapterData,
+    storyId,
+    authorId,
+  });
 
-    const result = await chapterService.createChapter({
-      ...chapterData,
-      story: storyId,
-      author: authorId,
-    });
-
-    return reply.code(201).send({
-      message: "Capítulo creado exitosamente",
-      chapter: result,
-    });
-  } catch (error) {
-    console.error("Error en createChapter controller:", error);
-    return reply.code(500).send({ message: error.message });
-  }
+  return reply.code(201).send({
+    message: "Capítulo creado exitosamente",
+    chapter: result,
+  });
 }
 
 // Controlador para obtener capítulos por historia
 async function getChaptersByStory(request, reply) {
-  try {
-    console.log("Obteniendo capítulos para la historia:", request.params.storyId);
-    const { storyId } = request.params;
-    const result = await chapterService.getChaptersByStory(storyId);
-
-    if (result.error) {
-      return reply.code(404).send(result);
-    }
-    reply.send(result);
-  } catch (error) {
-    reply.code(500).send({ error: "Ocurrió un error al obtener los capítulos." });
-  }
+  const { storyId } = request.params;
+  const chapters = await chapterService.getChaptersByStory(storyId);
+  reply.send({ chapters });
 }
 
 // Controlador para obtener un capítulo por ID
 async function getChapterById(request, reply) {
-  try {
-    const { id } = request.params;
-    const result = await chapterService.getChapterById(id);
-
-    if (result.error) {
-      return reply.code(404).send(result);
-    }
-    reply.send(result);
-  } catch (error) {
-    reply.code(500).send({ error: "Ocurrió un error al obtener el capítulo." });
-  }
+  const { id } = request.params;
+  const chapter = await chapterService.getChapterById(id);
+  reply.send({ chapter });
 }
 
 // Controlador para actualizar un capítulo
 async function updateChapter(request, reply) {
-  try {
-    const { id } = request.params;
-    const { userId } = request.user;
+  const { id } = request.params;
+  const { userId } = request.user;
 
-    // Verificación de permisos
-    const { chapter } = await chapterService.getChapterById(id);
-    if (!chapter) {
-      return reply.code(404).send({ error: "Capítulo no encontrado." });
-    }
-    if (chapter.story.author.toString() !== userId) {
-      return reply.code(403).send({ error: "No tienes permiso para editar este capítulo." });
-    }
-
-    const result = await chapterService.updateChapter(id, request.body);
-
-    if (result.error) {
-      return reply.code(400).send(result);
-    }
-    reply.send(result);
-  } catch (error) {
-    reply.code(500).send({ error: "Ocurrió un error al actualizar el capítulo." });
+  // Verificación de permisos
+  const chapter = await chapterService.getChapterById(id);
+  if (chapter.story.authorId !== userId) {
+    throw new Error("No tienes permiso para editar este capítulo.");
   }
+
+  const result = await chapterService.updateChapter(id, request.body);
+  reply.send({ chapter: result });
 }
 
 // eliminar un capítulo
 async function deleteChapter(request, reply) {
-  try {
-    const { id } = request.params;
-    const { userId } = request.user;
+  const { id } = request.params;
+  const { userId } = request.user;
 
-    const { chapter } = await chapterService.getChapterById(id);
-    if (!chapter) {
-      return reply.code(404).send({ error: "Capítulo no encontrado." });
-    }
-    if (chapter.story.author.toString() !== userId) {
-      return reply.code(403).send({ error: "No tienes permiso para eliminar este capítulo." });
-    }
-
-    const result = await chapterService.deleteChapter(id);
-
-    if (result.error) {
-      return reply.code(404).send(result);
-    }
-    reply.send(result);
-  } catch (error) {
-    reply.code(500).send({ error: "Ocurrió un error al eliminar el capítulo." });
+  const chapter = await chapterService.getChapterById(id);
+  if (chapter.story.authorId !== userId) {
+    throw new Error("No tienes permiso para eliminar este capítulo.");
   }
+
+  const result = await chapterService.deleteChapter(id);
+  reply.send({ message: "Capítulo eliminado exitosamente", chapter: result });
 }
 
 async function uploadChapterImage(request, reply) {
   const file = await request.file();
-  const storedFileName = `${Date.now()}-${file.filename}`;
-  const filePath = path.join(__dirname, "..", "..", "..", "uploads", "chapters", storedFileName);
-
-  try {
-    await pump(file.file, fs.createWriteStream(filePath));
-
-   
-    const url = `http://localhost:3000/uploads/chapters/${storedFileName}`;
-    return { url };
-  } catch (error) {
-    console.error("Error en el controlador uploadChapterImage:", error);
-    reply.code(500).send({ error: "Ocurrió un error inesperado al subir la imagen del capítulo." });
-  }
+  const result = await chapterService.uploadChapterImage(file, request);
+  return reply.send(result);
 }
 
 async function getPublishedChapterCount(request, reply) {
-  try {
-    const { storyId } = request.params;
-    const result = await chapterService.getPublishedChapterCount(storyId);
-
-    if (result.error) {
-      return reply.code(500).send(result);
-    }
-    reply.send(result);
-  } catch (error) {
-    console.error("Error en getPublishedChapterCount controller:", error);
-    reply
-      .code(500)
-      .send({ error: "Ocurrió un error inesperado al obtener la cantidad de capítulos." });
-  }
+  const { storyId } = request.params;
+  const publishedChapterCount = await chapterService.getPublishedChapterCount(storyId);
+  reply.send({ publishedChapterCount });
 }
 
 module.exports = {

@@ -24,44 +24,6 @@ const userBase = {
   },
 };
 
-const registerUserSchema = {
-  type: "object",
-  required: ["email", "password", "username", "fullName"],
-  properties: {
-    email: { type: "string", format: "email" },
-    password: { type: "string", minLength: 8 },
-    username: { type: "string", minLength: 3 },
-    fullName: { type: "string", minLength: 3 },
-  },
-};
-
-const registerResponseSchema = {
-  type: "object",
-  properties: {
-    user: userBase,
-    token: { type: "string" },
-  },
-  required: ["user", "token"],
-};
-
-const loginUserSchema = {
-  type: "object",
-  required: ["email", "password"],
-  properties: {
-    email: { type: "string", format: "email" },
-    password: { type: "string", minLength: 8 },
-  },
-};
-
-const loginResponseSchema = {
-  type: "object",
-  properties: {
-    user: userBase,
-    token: { type: "string" },
-  },
-  required: ["user", "token"],
-};
-
 const updateProfileSchema = {
   type: "object",
   properties: {
@@ -102,10 +64,6 @@ const userIdParamSchema = {
 };
 
 module.exports = {
-  registerUserSchema,
-  registerResponseSchema,
-  loginResponseSchema,
-  loginUserSchema,
   updateProfileSchema,
   changePasswordSchema,
   updateRoleSchema,

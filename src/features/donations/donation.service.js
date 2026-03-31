@@ -1,63 +1,63 @@
-const mongoose = require('mongoose')
-const Donation = require('../../models/donation.model')
-const User = require('../../models/user.model')
-const { Story } = require('../../models/story.model')
-const Transaction = require('../../models/transaction.model')
+const prisma = require('../../config/prisma')
+const { ValidationError, NotFoundError, ConflictError } = require('../../utils/errors')
 
 async function makeDonation(donatorId, storyId, amount, message) {
-  try {
-    if (amount <= 0) {
-      return { error: 'La cantidad a donar debe ser positiva.' }
-    }
+  if (amount <= 0) {
+    throw new ValidationError('La cantidad a donar debe ser positiva.')
+  }
 
-    const [donator, story] = await Promise.all([
-      User.findById(donatorId),
-      Story.findById(storyId)
-    ])
+  const [donator, story] = await Promise.all([
+    prisma.user.findUnique({ where: { id: donatorId } }),
+    prisma.story.findUnique({ where: { id: storyId } })
+  ])
 
-    if (!donator) return { error: 'El usuario donador no fue encontrado.' }
-    if (!story) return { error: 'La historia no fue encontrada.' }
+  if (!donator) throw new NotFoundError('El usuario donador no fue encontrado.')
+  if (!story) throw new NotFoundError('La historia no fue encontrada.')
 
-    const recipientId = story.author
+  const recipientId = story.authorId
 
-    if (donatorId.toString() === recipientId.toString()) {
-      return { error: 'No puedes donarte monedas a ti mismo.' }
-    }
-    if (donator.coins < amount) {
-      return {
-        error: 'No tienes suficientes monedas para realizar esta donación.'
-      }
-    }
+  if (donatorId === recipientId) {
+    throw new ConflictError('No puedes donarte monedas a ti mismo.')
+  }
+  if (donator.coins < amount) {
+    throw new ValidationError('No tienes suficientes monedas para realizar esta donación.')
+  }
 
-    await User.updateOne({ _id: donatorId }, { $inc: { coins: -amount } })
+  await prisma.user.update({
+    where: { id: donatorId },
+    data: { coins: { decrement: amount } }
+  })
 
-    await User.updateOne({ _id: recipientId }, { $inc: { coins: amount } })
+  await prisma.user.update({
+    where: { id: recipientId },
+    data: { coins: { increment: amount } }
+  })
 
-    const newDonation = await Donation.create({
+  const newDonation = await prisma.donation.create({
+    data: {
       donatorId,
       recipientId,
       storyId,
       amount,
       message
-    })
+    }
+  })
 
-    await Transaction.create({
+  await prisma.transaction.create({
+    data: {
       userId: donatorId,
-      type: 'donation',
+      type: 'DONATION',
       amount: amount,
       currency: 'coins',
-      status: 'completed',
+      status: 'COMPLETED',
       metadata: {
         recipientId,
         storyId
       }
-    })
+    }
+  })
 
-    return { success: true, donation: newDonation }
-  } catch (error) {
-    console.error('Error al procesar la donación:', error)
-    return { error: 'Ocurrió un error inesperado al procesar la donación.' }
-  }
+  return { success: true, donation: newDonation }
 }
 
 module.exports = { makeDonation }

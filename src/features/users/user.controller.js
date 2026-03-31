@@ -5,32 +5,6 @@ const { pipeline } = require("stream");
 const pump = util.promisify(pipeline);
 const userService = require("./user.service");
 
-//Registro de usuario
-async function register(request, reply) {
-  const { email, password, username, fullName } = request.body;
-  console.log("Datos de registro:", { email, username, fullName });
-  const result = await userService.registerUser({ email, password, username, fullName });
-  console.log("CONTROLLER Resultado de userService.registerUser:", result);
-  if (result.error) {
-    return reply.code(400).send({ error: result.error });
-  }
-
-  return result;
-}
-
-//Login de usuario
-async function login(request, reply) {
-  const { email, password } = request.body;
-
-  const result = await userService.loginUser({ email, password });
-
-  if (result.error) {
-    return reply.code(401).send({ error: result.error });
-  }
-
-  return result;
-}
-
 // Obtener usuario actual
 async function getCurrentUser(req, reply) {
   const user = await userService.getUserById({ userId: req.user.userId });
@@ -95,10 +69,6 @@ async function changePassword(req, reply) {
     oldPassword,
     newPassword,
   });
-
-  if (result.error) {
-    return reply.code(400).send({ error: result.error });
-  }
 
   reply.send({ message: result.message });
 }
@@ -172,13 +142,7 @@ async function getAllUsers(req, reply) {
 // Borrar usuario
 async function deleteUser(req, reply) {
   const { id } = req.params;
-
   const result = await userService.deleteUser({ userId: id });
-
-  if (result.error) {
-    return reply.code(404).send(result);
-  }
-
   reply.send(result);
 }
 
@@ -192,8 +156,6 @@ async function updateUserRole(req, reply) {
 }
 
 module.exports = {
-  register,
-  login,
   getCurrentUser,
   updateProfile,
   changePassword,

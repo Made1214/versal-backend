@@ -35,6 +35,7 @@ async function authRoutes(fastify) {
 
   fastify.get(
     "/auth/oauth/google/callback",
+    { schema: { response: { 200: { type: 'object' } } } },
     authController.oauthGoogleCallback,
   );
 

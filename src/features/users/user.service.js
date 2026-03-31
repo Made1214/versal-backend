@@ -1,121 +1,15 @@
 const prisma = require("../../config/prisma");
 const bcrypt = require("bcrypt");
+const { 
+  NotFoundError, 
+  ValidationError, 
+  ConflictError,
+} = require("../../utils/errors");
 
-// Validación de contraseña
+// Validación de contraseña (compartida con auth.service.js)
 function isValidPassword(password) {
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z\d]).{8,}$/;
   return regex.test(password);
-}
-
-// Registro de usuario
-async function registerUser({ email, password, username, fullName }) {
-  if (!isValidPassword(password)) {
-    return {
-      error:
-        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un carácter especial.",
-    };
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    if (existing.isDeleted) {
-      return {
-        error:
-          "El email ya estaba asociado a una cuenta eliminada. Ponte en contacto con soporte si quieres recuperarla.",
-      };
-    }
-    return { error: "El email ya está en uso" };
-  }
-
-  const hash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hash,
-      username,
-      fullName,
-      isDeleted: false,
-      deletedAt: null,
-    },
-  });
-
-  const { password: _password, ...userSafe } = user;
-  return { user: userSafe };
-}
-
-async function findOrCreateOAuthUser({
-  email,
-  fullName,
-  profileImage,
-  provider,
-  oauthId,
-}) {
-  let user = await prisma.user.findUnique({ where: { email } });
-  if (user) {
-    if (user.isDeleted) {
-      return { error: "La cuenta está eliminada." };
-    }
-    // Si el usuario ya existe con correo, no forzamos provider, pero guardamos ID si falta
-    if (!user.oauthProvider || user.oauthProvider !== provider) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          oauthProvider: provider,
-          oauthId,
-          profileImage: profileImage || user.profileImage,
-          fullName: fullName || user.fullName,
-        },
-      });
-    }
-    const { password: _password2, ...safe } = user;
-    return { user: safe };
-  }
-
-  const usernameBase = email.split("@")[0];
-  let uniqueUsername = usernameBase;
-  let i = 1;
-  while (
-    await prisma.user.findUnique({ where: { username: uniqueUsername } })
-  ) {
-    uniqueUsername = `${usernameBase}${i++}`;
-  }
-
-  user = await prisma.user.create({
-    data: {
-      email,
-      username: uniqueUsername,
-      fullName: fullName || "",
-      profileImage: profileImage || null,
-      password: "",
-      oauthProvider: provider,
-      oauthId,
-      isDeleted: false,
-    },
-  });
-
-  const { password: _password3, ...userSafe } = user;
-  return { user: userSafe };
-}
-
-// Login de usuario
-async function loginUser({ email, password }) {
-  try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.isDeleted) {
-      return { error: "Credenciales inválidas." };
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return { error: "Credenciales inválidas." };
-    }
-
-    const { password: _password, ...userSafe } = user;
-    return { user: userSafe };
-  } catch (error) {
-    console.error("Error al iniciar sesión:", error);
-    return { error: "Error interno del servidor al iniciar sesión." };
-  }
 }
 
 // Obtener perfil
@@ -133,7 +27,7 @@ async function getUserById({ userId, includeDeleted = false }) {
 async function getUserByEmail(email, includeDeleted = false) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || (!includeDeleted && user.isDeleted)) {
-    return null;
+    throw new NotFoundError("Usuario no encontrado");
   }
 
   const { password: _password, ...userSafe } = user;
@@ -174,14 +68,14 @@ async function updateUser({ userId, data }) {
 // Cambiar contraseña
 async function changePassword({ userId, oldPassword, newPassword }) {
   if (!isValidPassword(newPassword)) {
-    return { error: "La nueva contraseña no cumple con los requisitos." };
+    throw new ValidationError("La nueva contraseña no cumple con los requisitos.");
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return { error: "Usuario no encontrado" };
+  if (!user) throw new NotFoundError("Usuario no encontrado");
 
   const isValid = await bcrypt.compare(oldPassword, user.password);
-  if (!isValid) return { error: "Contraseña antigua incorrecta" };
+  if (!isValid) throw new ValidationError("Contraseña antigua incorrecta");
 
   const hash = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({ where: { id: userId }, data: { password: hash } });
@@ -214,13 +108,13 @@ async function getFollowing({ userId }) {
 // Seguir usuario
 async function followUser({ currentUserId, targetUserId }) {
   if (currentUserId === targetUserId) {
-    throw new Error("No puedes seguirte a ti mismo");
+    throw new ValidationError("No puedes seguirte a ti mismo");
   }
 
   const targetUser = await prisma.user.findUnique({
     where: { id: targetUserId },
   });
-  if (!targetUser) throw new Error("Usuario no encontrado");
+  if (!targetUser) throw new NotFoundError("Usuario no encontrado");
 
   const existing = await prisma.follow.findUnique({
     where: {
@@ -232,7 +126,7 @@ async function followUser({ currentUserId, targetUserId }) {
   });
 
   if (existing) {
-    throw new Error("Ya sigues a este usuario");
+    throw new ConflictError("Ya sigues a este usuario");
   }
 
   await prisma.follow.create({
@@ -244,7 +138,7 @@ async function followUser({ currentUserId, targetUserId }) {
 // Dejar de seguir
 async function unfollowUser({ currentUserId, targetUserId }) {
   if (currentUserId === targetUserId) {
-    throw new Error("No puedes dejar de seguirte a ti mismo");
+    throw new ValidationError("No puedes dejar de seguirte a ti mismo");
   }
 
   await prisma.follow.deleteMany({
@@ -260,7 +154,7 @@ async function unfollowUser({ currentUserId, targetUserId }) {
 // Bloquear usuario
 async function blockUser({ currentUserId, targetUserId }) {
   if (currentUserId === targetUserId) {
-    throw new Error("No puedes bloquearte a ti mismo");
+    throw new ValidationError("No puedes bloquearte a ti mismo");
   }
 
   const existing = await prisma.block.findUnique({
@@ -273,7 +167,7 @@ async function blockUser({ currentUserId, targetUserId }) {
   });
 
   if (existing) {
-    throw new Error("Ya has bloqueado a este usuario");
+    throw new ConflictError("Ya has bloqueado a este usuario");
   }
 
   await prisma.block.create({
@@ -285,7 +179,7 @@ async function blockUser({ currentUserId, targetUserId }) {
 // Desbloquear usuario
 async function unblockUser({ currentUserId, targetUserId }) {
   if (currentUserId === targetUserId) {
-    throw new Error("No puedes desbloquearte a ti mismo");
+    throw new ValidationError("No puedes desbloquearte a ti mismo");
   }
 
   await prisma.block.deleteMany({
@@ -346,7 +240,7 @@ async function deleteUser({ userId, hardDelete = false }) {
 
 async function updateUserRole({ userId, role }) {
   if (!["user", "admin"].includes(role)) {
-    throw new Error("Rol inválido");
+    throw new ValidationError("Rol inválido");
   }
 
   const updatedUser = await prisma.user.update({
@@ -375,8 +269,7 @@ async function updateUserRole({ userId, role }) {
 }
 
 module.exports = {
-  registerUser,
-  loginUser,
+  isValidPassword,
   getUserByEmail,
   getUserById,
   updateUser,
@@ -391,5 +284,4 @@ module.exports = {
   getAllUsers,
   deleteUser,
   updateUserRole,
-  findOrCreateOAuthUser,
 };

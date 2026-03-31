@@ -1,341 +1,311 @@
 const stripeKey = process.env.STRIPE_SECRET_KEY
 const stripe = stripeKey ? require('stripe')(stripeKey) : null
-const Transaction = require('../../models/transaction.model')
-const User = require('../../models/user.model')
+const prisma = require('../../config/prisma')
+const { ValidationError, NotFoundError } = require('../../utils/errors')
 const { COIN_PACKS } = require('../../config/products')
 const { SUBSCRIPTION_PLANS } = require('../../config/products')
-const {
-  Types: { ObjectId }
-} = require('mongoose')
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080'
 
 async function getStripeBalance() {
   if (!stripe) {
-    return { error: 'Stripe no está configurado.' }
+    throw new ValidationError('Stripe no está configurado.')
   }
-  try {
-    const balance = await stripe.balance.retrieve()
-    return { balance }
-  } catch (error) {
-    console.error('Error al obtener el balance de Stripe:', error)
-    return { error: 'No se pudo obtener el balance de Stripe.' }
-  }
+  const balance = await stripe.balance.retrieve()
+  return { balance }
 }
 
 async function createStripeCheckoutSessionForSubscription(userId, planId) {
   if (!stripe) {
-    return { error: 'Stripe no está configurado.' }
+    throw new ValidationError('Stripe no está configurado.')
   }
-  try {
-    const user = await User.findById(userId)
-    if (!user) {
-      return { error: 'Usuario no encontrado.' }
-    }
 
-    let stripeCustomerId = user.stripeCustomerId
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.username,
-        metadata: {
-          mongoDbUserId: userId.toString()
-        }
-      })
-      stripeCustomerId = customer.id
-      user.stripeCustomerId = stripeCustomerId
-      await user.save()
-    }
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado.')
+  }
 
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: 'subscription',
-      line_items: [
-        {
-          price: planId,
-          quantity: 1
-        }
-      ],
-      success_url: `${FRONTEND_URL}/frontend/modules/payment/payment-success.html`,
-      cancel_url: `${FRONTEND_URL}/frontend/modules/payment/payment-canceled.html`,
+  let stripeCustomerId = user.stripeCustomerId
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: user.username,
       metadata: {
-        userId: userId.toString(),
-        type: 'subscription',
-        planId: planId
-      },
-      subscription_data: {
-        metadata: {
-          mongoDbUserId: userId.toString()
-        }
+        prismaUserId: userId
       }
     })
+    stripeCustomerId = customer.id
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId }
+    })
+  }
 
-    const newTransaction = new Transaction({
-      userId,
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    mode: 'subscription',
+    line_items: [
+      {
+        price: planId,
+        quantity: 1
+      }
+    ],
+    success_url: `${FRONTEND_URL}/frontend/modules/payment/payment-success.html`,
+    cancel_url: `${FRONTEND_URL}/frontend/modules/payment/payment-canceled.html`,
+    metadata: {
+      userId: userId,
       type: 'subscription',
-      amount: 0,
-      currency: process.env.STRIPE_CURRENCY,
-      status: 'pending',
-      stripeCheckoutSessionId: session.id,
-      stripeCustomerId: stripeCustomerId,
+      planId: planId
+    },
+    subscription_data: {
       metadata: {
-        planId: planId
+        prismaUserId: userId
       }
-    })
-    await newTransaction.save()
-
-    return { sessionId: session.id, url: session.url }
-  } catch (error) {
-    console.error('Error al crear sesión de checkout para suscripción:', error)
-    return {
-      error: `Error al crear sesión de checkout para suscripción: ${error.message}`
     }
-  }
+  })
+
+  await prisma.transaction.create({
+    data: {
+      userId,
+      type: 'SUBSCRIPTION',
+      amount: 0,
+      currency: process.env.STRIPE_CURRENCY || 'usd',
+      status: 'PENDING',
+      metadata: {
+        planId: planId,
+        stripeCheckoutSessionId: session.id,
+        stripeCustomerId: stripeCustomerId
+      }
+    }
+  })
+
+  return { sessionId: session.id, url: session.url }
 }
 
 async function createStripeCheckoutSessionForCoinPack(userId, coinPackId) {
   if (!stripe) {
-    return { error: 'Stripe no está configurado.' }
+    throw new ValidationError('Stripe no está configurado.')
   }
-  try {
-    const user = await User.findById(userId)
-    if (!user) {
-      return { error: 'Usuario no encontrado.' }
-    }
 
-    let stripeCustomerId = user.stripeCustomerId
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.username,
-        metadata: {
-          mongoDbUserId: userId.toString()
-        }
-      })
-      stripeCustomerId = customer.id
-      user.stripeCustomerId = stripeCustomerId
-      await user.save()
-    }
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado.')
+  }
 
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: 'payment',
-      line_items: [
-        {
-          price: coinPackId,
-          quantity: 1
-        }
-      ],
-      success_url: `${FRONTEND_URL}/frontend/modules/payment/payment-success.html`,
-      cancel_url: `${FRONTEND_URL}/frontend/modules/payment/payment-canceled.html`,
+  let stripeCustomerId = user.stripeCustomerId
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: user.username,
       metadata: {
-        userId: userId.toString(),
-        type: 'coin_pack_purchase',
-        coinPackId: coinPackId
+        prismaUserId: userId
       }
     })
+    stripeCustomerId = customer.id
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId }
+    })
+  }
 
-    const newTransaction = new Transaction({
-      userId,
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    mode: 'payment',
+    line_items: [
+      {
+        price: coinPackId,
+        quantity: 1
+      }
+    ],
+    success_url: `${FRONTEND_URL}/frontend/modules/payment/payment-success.html`,
+    cancel_url: `${FRONTEND_URL}/frontend/modules/payment/payment-canceled.html`,
+    metadata: {
+      userId: userId,
       type: 'coin_pack_purchase',
-      amount: 0,
-      currency: process.env.STRIPE_CURRENCY,
-      status: 'pending',
-      stripeCheckoutSessionId: session.id,
-      stripeCustomerId: stripeCustomerId,
-      metadata: {
-        coinPackId: coinPackId
-      }
-    })
-    await newTransaction.save()
-
-    return { sessionId: session.id, url: session.url }
-  } catch (error) {
-    console.error(
-      'Error al crear sesión de checkout para pack de monedas:',
-      error
-    )
-    return {
-      error: `Error al crear sesión de checkout para pack de monedas: ${error.message}`
+      coinPackId: coinPackId
     }
-  }
+  })
+
+  await prisma.transaction.create({
+    data: {
+      userId,
+      type: 'TOPUP',
+      amount: 0,
+      currency: process.env.STRIPE_CURRENCY || 'usd',
+      status: 'PENDING',
+      metadata: {
+        coinPackId: coinPackId,
+        stripeCheckoutSessionId: session.id,
+        stripeCustomerId: stripeCustomerId
+      }
+    }
+  })
+
+  return { sessionId: session.id, url: session.url }
 }
 
 async function handleStripeWebhookEvent(event) {
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object
-        console.log('checkout.session.completed', session.id)
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object
 
-        const transaction = await Transaction.findOne({
-          stripeCheckoutSessionId: session.id
-        })
-
-        if (transaction) {
-          if (transaction.status === 'completed') {
-            console.log(
-              `Transacción ${transaction._id} ya está completada. Ignorando evento duplicado.`
-            )
-            return { message: 'Evento ya procesado.' }
+      const transaction = await prisma.transaction.findFirst({
+        where: {
+          metadata: {
+            path: ['stripeCheckoutSessionId'],
+            equals: session.id
           }
+        }
+      })
 
-          let paymentIntentOrSubscription
-          if (session.mode === 'payment' && session.payment_intent) {
-            paymentIntentOrSubscription = await stripe.paymentIntents.retrieve(
-              session.payment_intent
-            )
-            transaction.stripePaymentIntentId = paymentIntentOrSubscription.id
-          } else if (session.mode === 'subscription' && session.subscription) {
-            paymentIntentOrSubscription = await stripe.subscriptions.retrieve(
-              session.subscription
-            )
-            transaction.stripeSubscriptionId = paymentIntentOrSubscription.id
-          }
+      if (transaction) {
+        if (transaction.status === 'COMPLETED') {
+          return { message: 'Evento ya procesado.' }
+        }
 
-          transaction.status = 'completed'
-          transaction.amount = session.amount_total / 100
-          transaction.currency = session.currency
-          transaction.stripeCustomerId = session.customer
-          await transaction.save()
-
-          const userId = session.metadata.userId
-          const user = await User.findById(userId)
-
-          if (user) {
-            if (session.metadata.type === 'subscription') {
-              user.isPremium = true
-              user.premiumSubscriptionId = transaction.stripeSubscriptionId
-              user.subscriptionPlanId = session.metadata.planId
-
-              user.subscription.type = 'premium'
-              user.subscription.status = 'active'
-              user.subscription.endDate = null
-              await user.save()
-              console.log(`Usuario ${user.username} suscrito a premium.`)
-            } else if (session.metadata.type === 'coin_pack_purchase') {
-              const coinPackId = session.metadata.coinPackId
-              const coinsToAdd = getCoinsForPack(coinPackId)
-
-              if (coinsToAdd > 0) {
-                await User.findByIdAndUpdate(
-                  user._id,
-                  { $inc: { coins: coinsToAdd } },
-                  { new: true }
-                )
-                console.log(
-                  `Usuario ${user.username} compró ${coinsToAdd} monedas. Monedas añadidas atómicamente.`
-                )
-              } else {
-                console.warn(
-                  `No se encontraron monedas para el pack: ${coinPackId}. No se añadieron monedas al usuario ${user.username}.`
-                )
-              }
-            }
-          }
-        } else {
-          console.warn(
-            `Sesión de Checkout ${session.id} completada, pero no se encontró la transacción correspondiente en la DB.`
+        let paymentIntentOrSubscription
+        if (session.mode === 'payment' && session.payment_intent) {
+          paymentIntentOrSubscription = await stripe.paymentIntents.retrieve(
+            session.payment_intent
+          )
+        } else if (session.mode === 'subscription' && session.subscription) {
+          paymentIntentOrSubscription = await stripe.subscriptions.retrieve(
+            session.subscription
           )
         }
-        break
 
-      case 'invoice.payment_succeeded':
-        const invoice = event.data.object
-        console.log('invoice.payment_succeeded', invoice.id)
-        if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
-            invoice.subscription
-          )
-          const userIdFromMetadata = subscription.metadata.mongoDbUserId
-
-          if (userIdFromMetadata) {
-            const user = await User.findById(userIdFromMetadata)
-            if (user && !user.isPremium) {
-              user.isPremium = true
-              user.premiumSubscriptionId = subscription.id
-              await user.save()
-              console.log(
-                `Usuario ${user.username} reactivó suscripción por renovación.`
-              )
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'COMPLETED',
+            amount: session.amount_total / 100,
+            currency: session.currency,
+            metadata: {
+              ...transaction.metadata,
+              stripeCustomerId: session.customer,
+              stripePaymentIntentId: paymentIntentOrSubscription?.id
             }
+          }
+        })
 
-            const newTransaction = new Transaction({
-              userId: new ObjectId(userIdFromMetadata),
-              type: 'subscription',
+        const userId = session.metadata.userId
+        const user = await prisma.user.findUnique({ where: { id: userId } })
+
+        if (user) {
+          if (session.metadata.type === 'subscription') {
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                subscriptionType: 'PREMIUM',
+                subscriptionEndDate: null
+              }
+            })
+          } else if (session.metadata.type === 'coin_pack_purchase') {
+            const coinPackId = session.metadata.coinPackId
+            const coinsToAdd = getCoinsForPack(coinPackId)
+
+            if (coinsToAdd > 0) {
+              await prisma.user.update({
+                where: { id: userId },
+                data: { coins: { increment: coinsToAdd } }
+              })
+            }
+          }
+        }
+      }
+      break
+
+    case 'invoice.payment_succeeded':
+      const invoice = event.data.object
+      if (invoice.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(
+          invoice.subscription
+        )
+        const userIdFromMetadata = subscription.metadata.prismaUserId
+
+        if (userIdFromMetadata) {
+          const user = await prisma.user.findUnique({
+            where: { id: userIdFromMetadata }
+          })
+          if (user && user.subscriptionType !== 'PREMIUM') {
+            await prisma.user.update({
+              where: { id: userIdFromMetadata },
+              data: { subscriptionType: 'PREMIUM' }
+            })
+          }
+
+          await prisma.transaction.create({
+            data: {
+              userId: userIdFromMetadata,
+              type: 'SUBSCRIPTION',
               amount: invoice.amount_paid / 100,
               currency: invoice.currency,
-              status: 'completed',
-              stripeSubscriptionId: subscription.id,
-              stripeCustomerId: subscription.customer,
-              stripePaymentIntentId: invoice.payment_intent,
+              status: 'COMPLETED',
               metadata: {
                 renewal: true,
                 invoiceId: invoice.id,
                 planId: subscription.items.data[0].price.id
               }
-            })
-            await newTransaction.save()
-          }
-        }
-        break
-
-      case 'invoice.payment_failed':
-        const failedInvoice = event.data.object
-        console.log('invoice.payment_failed', failedInvoice.id)
-        if (failedInvoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
-            failedInvoice.subscription
-          )
-          const userIdFromMetadata = subscription.metadata.mongoDbUserId
-          if (userIdFromMetadata) {
-            const user = await User.findById(userIdFromMetadata)
-            if (user) {
-              console.log(
-                `Pago de suscripción fallido para usuario ${user.username}.`
-              )
             }
-          }
+          })
         }
-        break
+      }
+      break
 
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object
-        console.log('customer.subscription.deleted', deletedSubscription.id)
-
-        const userIdSubDeleted = deletedSubscription.metadata.mongoDbUserId
-        if (userIdSubDeleted) {
-          const user = await User.findById(userIdSubDeleted)
-          if (user) {
-            user.isPremium = false
-            user.premiumSubscriptionId = undefined
-            user.subscriptionPlanId = undefined
-
-            user.subscription.type = 'basic'
-            user.subscription.status = 'expired'
-            user.subscription.endDate = new Date()
-            await user.save()
-            console.log(
-              `Suscripción eliminada para el usuario ${user.username}.`
-            )
-          }
-        }
-
-        await Transaction.updateMany(
-          { stripeSubscriptionId: deletedSubscription.id, status: 'completed' },
-          { $set: { status: 'canceled' } }
+    case 'invoice.payment_failed':
+      const failedInvoice = event.data.object
+      if (failedInvoice.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(
+          failedInvoice.subscription
         )
-        break
+        const userIdFromMetadata = subscription.metadata.prismaUserId
+        if (userIdFromMetadata) {
+          const user = await prisma.user.findUnique({
+            where: { id: userIdFromMetadata }
+          })
+          if (user) {
+            // Log payment failure
+          }
+        }
+      }
+      break
 
-      default:
-        console.log(`Unhandled event type ${event.type}`)
-    }
+    case 'customer.subscription.deleted':
+      const deletedSubscription = event.data.object
 
-    return { received: true }
-  } catch (error) {
-    console.error('Error al manejar evento de webhook de Stripe:', error)
-    return { error: 'Error al manejar evento de webhook de Stripe.' }
+      const userIdSubDeleted = deletedSubscription.metadata.prismaUserId
+      if (userIdSubDeleted) {
+        const user = await prisma.user.findUnique({
+          where: { id: userIdSubDeleted }
+        })
+        if (user) {
+          await prisma.user.update({
+            where: { id: userIdSubDeleted },
+            data: {
+              subscriptionType: 'BASIC',
+              subscriptionEndDate: new Date()
+            }
+          })
+        }
+      }
+
+      await prisma.transaction.updateMany({
+        where: {
+          metadata: {
+            path: ['stripeSubscriptionId'],
+            equals: deletedSubscription.id
+          },
+          status: 'COMPLETED'
+        },
+        data: { status: 'CANCELED' }
+      })
+      break
+
+    default:
+      // Unhandled event type
   }
+
+  return { received: true }
 }
 
 function getCoinsForPack(coinPackId) {
@@ -352,27 +322,18 @@ function getCoinsForPack(coinPackId) {
 }
 
 async function getUserTransactions(userId) {
-  try {
-    const transactions = await Transaction.find({ userId })
-      .sort({ createdAt: -1 })
-      .lean()
-    return { transactions }
-  } catch (error) {
-    console.error(
-      `Error obteniendo transacciones para el usuario ${userId}:`,
-      error
-    )
-    return { error: 'Error al obtener transacciones del usuario.' }
-  }
+  const transactions = await prisma.transaction.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' }
+  })
+  return { transactions }
 }
 
 async function getSubscriptionPlans() {
-  console.log('Obteniendo planes de suscripción disponibles en service...')
   return { plans: SUBSCRIPTION_PLANS }
 }
 
 async function getCoinPacks() {
-  console.log('Obteniendo packs de monedas disponibles en service...')
   return { packs: COIN_PACKS }
 }
 

@@ -1,9 +1,5 @@
 const userController = require('./user.controller')
 const {
-  registerUserSchema,
-  registerResponseSchema,
-  loginResponseSchema,
-  loginUserSchema,
   updateProfileSchema,
   changePasswordSchema,
   userIdParamSchema,
@@ -93,10 +89,6 @@ async function userRoutes(fastify) {
   fastify.register(async function (adminRoutes) {
     adminRoutes.addHook('onRequest', async (req, reply) => {
       await fastify.authenticate(req, reply)
-      console.log(
-        'Verificando rol de usuario para acceso a rutas de administrador...'
-      )
-      console.log('Rol del usuario:', req.user.role)
       if (req.user.role !== 'admin') {
         return reply
           .code(403)
