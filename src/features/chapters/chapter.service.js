@@ -1,10 +1,6 @@
 import * as chapterRepo from "../../repositories/chapter.repository.js";
 import * as storyRepo from "../../repositories/story.repository.js";
-import fs from "fs";
-import util from "util";
-import path from "path";
-import { pipeline } from "stream";
-const pump = util.promisify(pipeline);
+import { uploadChapterImage } from "../../utils/fileUpload.js";
 import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 // Crear un nuevo capítulo
@@ -51,20 +47,9 @@ async function deleteChapter(chapterId) {
 }
 
 // Función para subir una imagen de capítulo
-async function uploadChapterImage(file, req) {
-  const uploadDir = path.join(__dirname, "../../../uploads/chapters");
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  const uniqueFilename = `${Date.now()}-${file.filename}`;
-  const uploadPath = path.join(uploadDir, uniqueFilename);
-
-  await pump(file.file, fs.createWriteStream(uploadPath));
-
-  const imageUrl = `${req.protocol}://${req.headers.host}/uploads/chapters/${uniqueFilename}`;
-
-  return { url: imageUrl };
+async function uploadChapterImageWrapper(file, req) {
+  const url = await uploadChapterImage(file, req);
+  return { url };
 }
 
 //Obtiene la cantidad de capítulos publicados para una historia
@@ -79,6 +64,6 @@ export {
   getChapterById,
   updateChapter,
   deleteChapter,
-  uploadChapterImage,
+  uploadChapterImageWrapper as uploadChapterImage,
   getPublishedChapterCount,
 };

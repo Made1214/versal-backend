@@ -1,9 +1,5 @@
-import fs from "fs";
-import util from "util";
-import path from "path";
-import { pipeline } from "stream";
-const pump = util.promisify(pipeline);
 import * as userService from "./user.service.js";
+import { uploadAvatar } from "../../utils/fileUpload.js";
 
 // Obtener usuario actual
 async function getCurrentUser(req, reply) {
@@ -37,16 +33,7 @@ async function updateProfile(req, reply) {
   const parts = req.parts();
   for await (const part of parts) {
     if (part.file) {
-      const uploadDir = path.join(__dirname, `../../../uploads/avatars`);
-
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      const uniqueFilename = `${Date.now()}-${part.filename}`;
-      const uploadPath = path.join(uploadDir, uniqueFilename);
-      await pump(part.file, fs.createWriteStream(uploadPath));
-
-      const imageUrl = `${req.protocol}://${req.headers.host}/uploads/avatars/${uniqueFilename}`;
+      const imageUrl = await uploadAvatar(part, req);
       data.profileImage = imageUrl;
     } else {
       data[part.fieldname] = part.value;

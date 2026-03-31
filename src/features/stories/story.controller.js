@@ -1,30 +1,16 @@
 import * as storyService from "./story.service.js";
-import fs from "fs";
-import util from "util";
-import path from "path";
-import { pipeline } from "stream";
-const pump = util.promisify(pipeline);
+import { uploadCover } from "../../utils/fileUpload.js";
 
 // Controlador para crear una nueva historia
 async function createStory(request, reply) {
   const { userId } = request.user;
   const data = { authorId: userId };
-  let coverImageUrl = null;
 
   const parts = request.parts();
   for await (const part of parts) {
     if (part.file) {
       if (part.fieldname === "coverImage") {
-        const uploadDir = path.join(__dirname, `../../../uploads/covers`);
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        const uniqueFilename = `${Date.now()}-${part.filename}`;
-        const uploadPath = path.join(uploadDir, uniqueFilename);
-
-        await pump(part.file, fs.createWriteStream(uploadPath));
-
-        coverImageUrl = `${request.protocol}://${request.headers.host}/uploads/covers/${uniqueFilename}`;
+        const coverImageUrl = await uploadCover(part, request);
         data.coverImage = coverImageUrl;
       }
     } else {
