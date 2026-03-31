@@ -1,4 +1,4 @@
-import * as reportRepo from "../../models/report.repository.js";
+import * as reportRepo from "../../repositories/report.repository.js";
 import { NotFoundError, ValidationError, ConflictError } from "../../utils/errors.js";
 
 async function createReport(reportData) {

@@ -1,5 +1,5 @@
-import * as storyRepo from "../../models/story.repository.js";
-import * as favoriteRepo from "../../models/favorite.repository.js";
+import * as storyRepo from "../../repositories/story.repository.js";
+import * as favoriteRepo from "../../repositories/favorite.repository.js";
 import { NotFoundError } from "../../utils/errors.js";
 
 async function toggleFavorite(userId, storyId) {

@@ -1,6 +1,6 @@
-import * as userRepo from '../../models/user.repository.js';
-import * as storyRepo from '../../models/story.repository.js';
-import * as transactionRepo from '../../models/transaction.repository.js';
+import * as userRepo from '../../repositories/user.repository.js';
+import * as storyRepo from '../../repositories/story.repository.js';
+import * as transactionRepo from '../../repositories/transaction.repository.js';
 import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors.js';
 
 async function makeDonation(donatorId, storyId, amount, message) {

@@ -1,6 +1,6 @@
-import * as interactionRepo from "../../models/interaction.repository.js";
-import * as chapterRepo from "../../models/chapter.repository.js";
-import * as storyRepo from "../../models/story.repository.js";
+import * as interactionRepo from "../../repositories/interaction.repository.js";
+import * as chapterRepo from "../../repositories/chapter.repository.js";
+import * as storyRepo from "../../repositories/story.repository.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors.js"; 
 
 
@@ -19,7 +19,7 @@ async function addInteractionToChapter({ chapterId, userId, interactionType, tex
     const existingLike = await interactionRepo.findLike(userId, chapterId);
 
     if (existingLike) {
-      await interactionRepo.removeLike(userId, chapterId);
+      await interactionRepo.deleteLike(userId, chapterId);
       await updateStoryTotalLikes(chapter.storyId);
       return { status: "unliked", message: "Me gusta quitado." };
     } else {

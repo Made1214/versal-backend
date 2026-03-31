@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import * as userService from "../users/user.service.js";
-import * as authRepo from "../../models/auth.repository.js";
+import * as authRepo from "../../repositories/auth.repository.js";
 import { 
   NotFoundError, 
   ValidationError, 
