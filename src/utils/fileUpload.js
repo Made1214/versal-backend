@@ -1,72 +1,73 @@
-import fs from "fs";
-import util from "util";
-import path from "path";
-import { pipeline } from "stream";
-import { fileURLToPath } from "url";
+import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
 
-const pump = util.promisify(pipeline);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Configurar Cloudinary con variables de entorno
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 /**
- * Sube un archivo a un directorio específico
+ * Sube un archivo a Cloudinary
  * @param {Object} file - Objeto de archivo de Fastify multipart
- * @param {string} subdirectory - Subdirectorio dentro de uploads (ej: 'avatars', 'covers', 'chapters')
- * @param {Object} request - Objeto de request de Fastify (para obtener protocol y host)
+ * @param {string} folder - Carpeta en Cloudinary (ej: 'avatars', 'covers', 'chapters')
  * @returns {Promise<string>} URL del archivo subido
  * @throws {Error} Si hay error al subir el archivo
  */
-export async function uploadFile(file, subdirectory, request) {
+export async function uploadFile(file, folder) {
   if (!file) {
     throw new Error("No file provided");
   }
 
-  // Construir ruta del directorio
-  const uploadDir = path.join(__dirname, `../../../uploads/${subdirectory}`);
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `versal/${folder}`,
+        resource_type: "auto",
+        quality: "auto",
+      },
+      (error, result) => {
+        if (error) {
+          reject(new Error(`Upload failed: ${error.message}`));
+        } else {
+          resolve(result.secure_url);
+        }
+      }
+    );
 
-  // Crear directorio si no existe
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // Generar nombre único para el archivo
-  const uniqueFilename = `${Date.now()}-${file.filename}`;
-  const uploadPath = path.join(uploadDir, uniqueFilename);
-
-  // Guardar archivo
-  await pump(file.file, fs.createWriteStream(uploadPath));
-
-  // Construir URL del archivo
-  const imageUrl = `${request.protocol}://${request.headers.host}/uploads/${subdirectory}/${uniqueFilename}`;
-
-  return imageUrl;
+    // Convertir el stream de Fastify a stream legible
+    if (file.file && typeof file.file.pipe === "function") {
+      file.file.pipe(uploadStream);
+    } else {
+      reject(new Error("Invalid file stream"));
+    }
+  });
 }
 
 /**
  * Sube un avatar de usuario
  * @param {Object} file - Objeto de archivo de Fastify multipart
- * @param {Object} request - Objeto de request de Fastify
  * @returns {Promise<string>} URL del avatar subido
  */
-export async function uploadAvatar(file, request) {
-  return uploadFile(file, "avatars", request);
+export async function uploadAvatar(file) {
+  return uploadFile(file, "avatars");
 }
 
 /**
  * Sube una portada de historia
  * @param {Object} file - Objeto de archivo de Fastify multipart
- * @param {Object} request - Objeto de request de Fastify
  * @returns {Promise<string>} URL de la portada subida
  */
-export async function uploadCover(file, request) {
-  return uploadFile(file, "covers", request);
+export async function uploadCover(file) {
+  return uploadFile(file, "covers");
 }
 
 /**
  * Sube una imagen de capítulo
  * @param {Object} file - Objeto de archivo de Fastify multipart
- * @param {Object} request - Objeto de request de Fastify
  * @returns {Promise<string>} URL de la imagen subida
  */
-export async function uploadChapterImage(file, request) {
-  return uploadFile(file, "chapters", request);
+export async function uploadChapterImage(file) {
+  return uploadFile(file, "chapters");
 }

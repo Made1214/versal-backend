@@ -33,7 +33,7 @@ async function updateProfile(req, reply) {
   const parts = req.parts();
   for await (const part of parts) {
     if (part.file) {
-      const imageUrl = await uploadAvatar(part, req);
+      const imageUrl = await uploadAvatar(part);
       data.profileImage = imageUrl;
     } else {
       data[part.fieldname] = part.value;

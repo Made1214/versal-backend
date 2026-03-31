@@ -47,8 +47,8 @@ async function deleteChapter(chapterId) {
 }
 
 // Función para subir una imagen de capítulo
-async function uploadChapterImageWrapper(file, req) {
-  const url = await uploadChapterImage(file, req);
+async function uploadChapterImageWrapper(file) {
+  const url = await uploadChapterImage(file);
   return { url };
 }
 
