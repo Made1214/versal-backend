@@ -7,11 +7,7 @@ async function addInteractionToChapter(request, reply) {
   let requestBody = request.body;
 
   if (typeof requestBody === "string") {
-    try {
-      requestBody = JSON.parse(requestBody);
-    } catch (e) {
-      return reply.code(400).send({ message: "Invalid JSON body received." });
-    }
+    requestBody = JSON.parse(requestBody);
   }
 
   const { interactionType, text } = requestBody;
