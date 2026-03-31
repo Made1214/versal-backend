@@ -1,75 +1,37 @@
-import prisma from "../../config/prisma.js";
-import { NotFoundError, ValidationError } from "../../utils/errors.js";
+import * as storyRepo from "../../models/story.repository.js";
+import * as favoriteRepo from "../../models/favorite.repository.js";
+import { NotFoundError } from "../../utils/errors.js";
 
 async function toggleFavorite(userId, storyId) {
-  const story = await prisma.story.findUnique({ where: { id: storyId } });
+  const story = await storyRepo.findById(storyId);
   if (!story) {
     throw new NotFoundError("Historia no encontrada");
   }
 
-  const existingFavorite = await prisma.favorite.findUnique({
-    where: {
-      userId_storyId: {
-        userId,
-        storyId,
-      },
-    },
-  });
+  const existingFavorite = await favoriteRepo.findByUserAndStory(userId, storyId);
 
   if (existingFavorite) {
-    await prisma.favorite.delete({
-      where: {
-        userId_storyId: {
-          userId,
-          storyId,
-        },
-      },
-    });
+    await favoriteRepo.remove(userId, storyId);
     return { status: "unfavorited" };
   } else {
-    await prisma.favorite.create({
-      data: {
-        userId,
-        storyId,
-      },
-    });
+    await favoriteRepo.create(userId, storyId);
     return { status: "favorited" };
   }
 }
 
 async function checkIsFavorite(userId, storyId) {
-  const story = await prisma.story.findUnique({ where: { id: storyId } });
+  const story = await storyRepo.findById(storyId);
   if (!story) {
     throw new NotFoundError("Historia no encontrada");
   }
 
-  const favorite = await prisma.favorite.findUnique({
-    where: {
-      userId_storyId: {
-        userId,
-        storyId,
-      },
-    },
-  });
-
+  const favorite = await favoriteRepo.findByUserAndStory(userId, storyId);
   const isFavorite = !!favorite;
   return { isFavorite };
 }
 
 async function getFavoriteStoriesByUser(userId) {
-  const favorites = await prisma.favorite.findMany({
-    where: { userId },
-    include: {
-      story: {
-        include: {
-          author: {
-            select: { username: true, profileImage: true },
-          },
-        },
-      },
-    },
-  });
-
+  const favorites = await favoriteRepo.findManyByUser(userId);
   const stories = favorites.map((fav) => fav.story);
   return { stories };
 }

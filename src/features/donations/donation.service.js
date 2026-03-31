@@ -1,4 +1,6 @@
-import prisma from '../../config/prisma.js';
+import * as userRepo from '../../models/user.repository.js';
+import * as storyRepo from '../../models/story.repository.js';
+import * as transactionRepo from '../../models/transaction.repository.js';
 import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors.js';
 
 async function makeDonation(donatorId, storyId, amount, message) {
@@ -7,8 +9,8 @@ async function makeDonation(donatorId, storyId, amount, message) {
   }
 
   const [donator, story] = await Promise.all([
-    prisma.user.findUnique({ where: { id: donatorId } }),
-    prisma.story.findUnique({ where: { id: storyId } })
+    userRepo.findById(donatorId),
+    storyRepo.findById(storyId)
   ])
 
   if (!donator) throw new NotFoundError('El usuario donador no fue encontrado.')
@@ -23,37 +25,26 @@ async function makeDonation(donatorId, storyId, amount, message) {
     throw new ValidationError('No tienes suficientes monedas para realizar esta donación.')
   }
 
-  await prisma.user.update({
-    where: { id: donatorId },
-    data: { coins: { decrement: amount } }
+  await userRepo.update(donatorId, { coins: { decrement: amount } })
+  await userRepo.update(recipientId, { coins: { increment: amount } })
+
+  const newDonation = await transactionRepo.createDonation({
+    donatorId,
+    recipientId,
+    storyId,
+    amount,
+    message
   })
 
-  await prisma.user.update({
-    where: { id: recipientId },
-    data: { coins: { increment: amount } }
-  })
-
-  const newDonation = await prisma.donation.create({
-    data: {
-      donatorId,
+  await transactionRepo.create({
+    userId: donatorId,
+    type: 'DONATION',
+    amount: amount,
+    currency: 'coins',
+    status: 'COMPLETED',
+    metadata: {
       recipientId,
-      storyId,
-      amount,
-      message
-    }
-  })
-
-  await prisma.transaction.create({
-    data: {
-      userId: donatorId,
-      type: 'DONATION',
-      amount: amount,
-      currency: 'coins',
-      status: 'COMPLETED',
-      metadata: {
-        recipientId,
-        storyId
-      }
+      storyId
     }
   })
 

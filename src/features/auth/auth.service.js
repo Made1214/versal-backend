@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import prisma from "../../config/prisma.js";
 import * as userService from "../users/user.service.js";
+import * as authRepo from "../../models/auth.repository.js";
 import { 
   NotFoundError, 
   ValidationError, 
@@ -74,15 +74,18 @@ function hashToken(token) {
 // Guarda un refreshToken en base de datos.
 async function saveRefreshToken({ token, userId, userAgent, expiresAt }) {
   const tokenHash = hashToken(token);
-  await prisma.refreshToken.create({
-    data: { tokenHash, userId, userAgent, expiresAt },
+  await authRepo.createRefreshToken({
+    tokenHash,
+    userId,
+    userAgent,
+    expiresAt,
   });
 }
 
 // Verifica token de refresh: existe, no revocado y no expirado.
 async function verifyRefreshToken(token) {
   const tokenHash = hashToken(token);
-  const refreshToken = await prisma.refreshToken.findUnique({ where: { tokenHash } });
+  const refreshToken = await authRepo.findRefreshTokenByHash(tokenHash);
   if (!refreshToken) throw new UnauthorizedError("Refresh token inválido.");
   if (refreshToken.revoked) throw new UnauthorizedError("Refresh token revocado.");
   if (refreshToken.expiresAt < new Date())
@@ -94,14 +97,14 @@ async function verifyRefreshToken(token) {
 // Revoca refresh token de la base de datos.
 async function revokeRefreshToken(token) {
   const tokenHash = hashToken(token);
-  const refreshToken = await prisma.refreshToken.findUnique({ where: { tokenHash } });
+  const refreshToken = await authRepo.findRefreshTokenByHash(tokenHash);
   if (!refreshToken) {
     throw new NotFoundError("Refresh token inválido para revocación.");
   }
 
-  await prisma.refreshToken.update({
-    where: { tokenHash },
-    data: { revoked: true, revokedAt: new Date() },
+  await authRepo.updateRefreshToken(tokenHash, {
+    revoked: true,
+    revokedAt: new Date(),
   });
 
   return { success: true };
@@ -118,12 +121,10 @@ async function requestPasswordReset({ email }) {
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h
 
-  await prisma.passwordReset.create({
-    data: {
-      userId: user.id,
-      tokenHash,
-      expiresAt,
-    },
+  await authRepo.createPasswordReset({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
   });
 
   // TODO: enviar email real; por ahora devolvemos token para testing.
@@ -142,14 +143,12 @@ async function resetPassword({ email, token, newPassword }) {
   }
 
   const tokenHash = hashToken(token);
-  const resetEntry = await prisma.passwordReset.findFirst({
-    where: {
-      userId: user.id,
-      tokenHash,
-      usedAt: null,
-      expiresAt: {
-        gt: new Date(),
-      },
+  const resetEntry = await authRepo.findPasswordReset({
+    userId: user.id,
+    tokenHash,
+    usedAt: null,
+    expiresAt: {
+      gt: new Date(),
     },
   });
 
@@ -164,15 +163,12 @@ async function resetPassword({ email, token, newPassword }) {
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({
-    where: { id: user.id },
+  await userService.updateUser({
+    userId: user.id,
     data: { password: hashedPassword },
   });
 
-  await prisma.passwordReset.update({
-    where: { id: resetEntry.id },
-    data: { usedAt: new Date() },
-  });
+  await authRepo.updatePasswordReset(resetEntry.id, { usedAt: new Date() });
 
   return { message: "Contraseña restablecida correctamente." };
 }

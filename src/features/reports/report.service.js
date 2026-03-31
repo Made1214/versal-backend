@@ -1,44 +1,24 @@
-import prisma from "../../config/prisma.js";
+import * as reportRepo from "../../models/report.repository.js";
 import { NotFoundError, ValidationError, ConflictError } from "../../utils/errors.js";
 
 async function createReport(reportData) {
-  const { contentId, userId, target, reason, details } = reportData;
+  const { contentId, userId } = reportData;
 
-  const existingReport = await prisma.report.findFirst({
-    where: {
-      userId,
-      contentId,
-    },
+  const existingReport = await reportRepo.findFirst({
+    userId,
+    contentId,
   });
 
   if (existingReport) {
     throw new ConflictError("Ya has reportado este contenido anteriormente.");
   }
 
-  const newReport = await prisma.report.create({
-    data: {
-      userId,
-      contentId,
-      target,
-      reason,
-      details,
-    },
-  });
-
+  const newReport = await reportRepo.create(reportData);
   return { report: newReport };
 }
 
 async function getAllReports(filters = {}) {
-  const reports = await prisma.report.findMany({
-    where: filters,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: { username: true, email: true },
-      },
-    },
-  });
-
+  const reports = await reportRepo.findMany(filters);
   return { reports };
 }
 
@@ -48,10 +28,7 @@ async function updateReportStatus(reportId, status) {
     throw new ValidationError("Estado de reporte no válido.");
   }
 
-  const updatedReport = await prisma.report.update({
-    where: { id: reportId },
-    data: { status },
-  });
+  const updatedReport = await reportRepo.update(reportId, { status });
 
   if (!updatedReport) {
     throw new NotFoundError("Reporte no encontrado.");

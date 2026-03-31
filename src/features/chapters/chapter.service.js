@@ -1,4 +1,5 @@
-import prisma from "../../config/prisma.js";
+import * as chapterRepo from "../../repositories/chapter.repository.js";
+import * as storyRepo from "../../repositories/story.repository.js";
 import fs from "fs";
 import util from "util";
 import path from "path";
@@ -8,29 +9,19 @@ import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 // Crear un nuevo capítulo
 async function createChapter(fullChapterData) {
-  const newChapter = await prisma.chapter.create({
-    data: fullChapterData,
-  });
-
+  const newChapter = await chapterRepo.create(fullChapterData);
   return newChapter;
 }
 
 // Obtener todos los capítulos de una historia
 async function getChaptersByStory(storyId) {
-  const chapters = await prisma.chapter.findMany({
-    where: { storyId },
-    orderBy: { chapterNumber: "asc" },
-  });
+  const chapters = await chapterRepo.findByStory(storyId);
   return chapters;
 }
 
 // Obtener un capítulo por su ID
 async function getChapterById(chapterId) {
-  const chapter = await prisma.chapter.findUnique({
-    where: { id: chapterId },
-    include: { story: { select: { title: true, authorId: true } } },
-  });
-
+  const chapter = await chapterRepo.findById(chapterId);
   if (!chapter) {
     throw new NotFoundError("Capítulo no encontrado.");
   }
@@ -39,16 +30,10 @@ async function getChapterById(chapterId) {
 
 // Actualizar un capítulo por su ID
 async function updateChapter(chapterId, updateData) {
-  const updatedChapter = await prisma.chapter.update({
-    where: { id: chapterId },
-    data: updateData,
-  });
+  const updatedChapter = await chapterRepo.update(chapterId, updateData);
 
   if (updateData.status === "published") {
-    await prisma.story.update({
-      where: { id: updatedChapter.storyId },
-      data: { status: "published" },
-    });
+    await storyRepo.update(updatedChapter.storyId, { status: "published" });
   }
 
   return updatedChapter;
@@ -56,18 +41,12 @@ async function updateChapter(chapterId, updateData) {
 
 // Eliminar un capítulo por su ID
 async function deleteChapter(chapterId) {
-  const chapter = await prisma.chapter.findUnique({
-    where: { id: chapterId },
-  });
-
+  const chapter = await chapterRepo.findById(chapterId);
   if (!chapter) {
     throw new NotFoundError("Capítulo no encontrado");
   }
 
-  await prisma.chapter.delete({
-    where: { id: chapterId },
-  });
-
+  await chapterRepo.remove(chapterId);
   return chapter;
 }
 
@@ -90,9 +69,7 @@ async function uploadChapterImage(file, req) {
 
 //Obtiene la cantidad de capítulos publicados para una historia
 async function getPublishedChapterCount(storyId) {
-  const count = await prisma.chapter.count({
-    where: { storyId, status: "published" },
-  });
+  const count = await chapterRepo.countPublished(storyId);
   return count;
 }
 

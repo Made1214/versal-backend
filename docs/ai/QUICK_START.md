@@ -141,12 +141,11 @@ export const loginSchema = {
 - ✅ Validación de Stripe keys
 - ✅ 83 tests pasando
 
-### ⏳ Pendiente (Fase 3.2 - Nice to Have)
+### ⏳ Pendiente (Fase 3.4 - Nice to Have)
 
-- [ ] Separar story.model.js en 3 modelos
 - [ ] Extraer lógica de upload a util reutilizable
 - [ ] Transacciones de Prisma para operaciones críticas
-- [ ] Repository pattern
+- [ ] Repository pattern para otros modelos
 - [ ] Tests unitarios y de integración completos
 - [ ] Docker setup
 - [ ] Inyección de dependencias
@@ -233,4 +232,4 @@ pnpm remove jsonwebtoken  # Eliminar dependencia no usada
 ---
 
 **Última actualización**: 31/03/2026  
-**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ✅ | Fase 3.1 ✅ | Fase 3.2 ⏳
+**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ✅ | Fase 3.1 ✅ | Fase 3.3 ✅ | Fase 3.4 ⏳

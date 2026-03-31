@@ -5,7 +5,6 @@ import { pipeline } from "stream";
 const pump = util.promisify(pipeline);
 
 import * as chapterService from "./chapter.service.js";
-import { Story } from "../../models/story.model.js";
 
 // Controlador para crear un nuevo capítulo
 async function createChapter(request, reply) {

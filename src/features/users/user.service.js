@@ -1,5 +1,5 @@
-import prisma from "../../config/prisma.js";
 import bcrypt from "bcrypt";
+import * as userRepo from "../../repositories/user.repository.js";
 import { 
   NotFoundError, 
   ValidationError, 
@@ -19,9 +19,9 @@ function isValidEmail(email) {
 
 // Obtener perfil
 async function getUserById({ userId, includeDeleted = false }) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await userRepo.findById(userId);
   if (!user || (!includeDeleted && user.isDeleted)) {
-    throw new Error("Usuario no encontrado");
+    throw new NotFoundError("Usuario no encontrado");
   }
 
   const { password: _password, ...userSafe } = user;
@@ -30,9 +30,9 @@ async function getUserById({ userId, includeDeleted = false }) {
 
 // Obtener usuario por email
 async function getUserByEmail(email, includeDeleted = false) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await userRepo.findByEmail(email);
   if (!user || (!includeDeleted && user.isDeleted)) {
-    throw new NotFoundError("Usuario no encontrado");
+    return null;
   }
 
   const { password: _password, ...userSafe } = user;
@@ -45,28 +45,7 @@ async function updateUser({ userId, data }) {
     delete data.password;
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data,
-    select: {
-      password: false,
-      id: true,
-      fullName: true,
-      username: true,
-      email: true,
-      profileImage: true,
-      role: true,
-      bio: true,
-      subscriptionType: true,
-      subscriptionEndDate: true,
-      coins: true,
-      isDeleted: true,
-      deletedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
+  const updatedUser = await userRepo.update(userId, data);
   return updatedUser;
 }
 
@@ -76,38 +55,26 @@ async function changePassword({ userId, oldPassword, newPassword }) {
     throw new ValidationError("La nueva contraseña no cumple con los requisitos.");
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await userRepo.findById(userId);
   if (!user) throw new NotFoundError("Usuario no encontrado");
 
   const isValid = await bcrypt.compare(oldPassword, user.password);
   if (!isValid) throw new ValidationError("Contraseña antigua incorrecta");
 
   const hash = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({ where: { id: userId }, data: { password: hash } });
+  await userRepo.update(userId, { password: hash });
 
   return { message: "Contraseña actualizada correctamente" };
 }
 
 // Ver seguidores
 async function getFollowers({ userId }) {
-  const followers = await prisma.follow.findMany({
-    where: { followeeId: userId },
-    select: {
-      follower: { select: { id: true, username: true, profileImage: true } },
-    },
-  });
-  return followers.map((f) => f.follower);
+  return await userRepo.findFollowers(userId);
 }
 
 // Ver seguidos
 async function getFollowing({ userId }) {
-  const following = await prisma.follow.findMany({
-    where: { followerId: userId },
-    select: {
-      followee: { select: { id: true, username: true, profileImage: true } },
-    },
-  });
-  return following.map((f) => f.followee);
+  return await userRepo.findFollowing(userId);
 }
 
 // Seguir usuario
@@ -116,27 +83,15 @@ async function followUser({ currentUserId, targetUserId }) {
     throw new ValidationError("No puedes seguirte a ti mismo");
   }
 
-  const targetUser = await prisma.user.findUnique({
-    where: { id: targetUserId },
-  });
+  const targetUser = await userRepo.findById(targetUserId);
   if (!targetUser) throw new NotFoundError("Usuario no encontrado");
 
-  const existing = await prisma.follow.findUnique({
-    where: {
-      followerId_followeeId: {
-        followerId: currentUserId,
-        followeeId: targetUserId,
-      },
-    },
-  });
-
+  const existing = await userRepo.findFollow(currentUserId, targetUserId);
   if (existing) {
     throw new ConflictError("Ya sigues a este usuario");
   }
 
-  await prisma.follow.create({
-    data: { followerId: currentUserId, followeeId: targetUserId },
-  });
+  await userRepo.createFollow(currentUserId, targetUserId);
   return { success: true, message: "Usuario seguido correctamente" };
 }
 
@@ -146,9 +101,7 @@ async function unfollowUser({ currentUserId, targetUserId }) {
     throw new ValidationError("No puedes dejar de seguirte a ti mismo");
   }
 
-  await prisma.follow.deleteMany({
-    where: { followerId: currentUserId, followeeId: targetUserId },
-  });
+  await userRepo.deleteFollow(currentUserId, targetUserId);
 
   return {
     success: true,
@@ -162,22 +115,12 @@ async function blockUser({ currentUserId, targetUserId }) {
     throw new ValidationError("No puedes bloquearte a ti mismo");
   }
 
-  const existing = await prisma.block.findUnique({
-    where: {
-      blockerId_blockedId: {
-        blockerId: currentUserId,
-        blockedId: targetUserId,
-      },
-    },
-  });
-
+  const existing = await userRepo.findBlock(currentUserId, targetUserId);
   if (existing) {
     throw new ConflictError("Ya has bloqueado a este usuario");
   }
 
-  await prisma.block.create({
-    data: { blockerId: currentUserId, blockedId: targetUserId },
-  });
+  await userRepo.createBlock(currentUserId, targetUserId);
   return { success: true, message: "Usuario bloqueado correctamente" };
 }
 
@@ -187,59 +130,28 @@ async function unblockUser({ currentUserId, targetUserId }) {
     throw new ValidationError("No puedes desbloquearte a ti mismo");
   }
 
-  await prisma.block.deleteMany({
-    where: { blockerId: currentUserId, blockedId: targetUserId },
-  });
+  await userRepo.deleteBlock(currentUserId, targetUserId);
 
   return { success: true, message: "Usuario desbloqueado correctamente" };
 }
 
 // Obtener bloqueados
 async function getBlockedUsers({ userId }) {
-  const blocks = await prisma.block.findMany({
-    where: { blockerId: userId },
-    select: { blocked: { select: { id: true, username: true, email: true } } },
-  });
-  return blocks.map((bl) => bl.blocked);
+  return await userRepo.findBlockedUsers(userId);
 }
 
 // ADMIN
 async function getAllUsers({ includeDeleted = false } = {}) {
-  const where = includeDeleted ? {} : { isDeleted: false };
-  const users = await prisma.user.findMany({
-    where,
-    select: {
-      password: false,
-      id: true,
-      fullName: true,
-      username: true,
-      email: true,
-      profileImage: true,
-      role: true,
-      bio: true,
-      subscriptionType: true,
-      subscriptionEndDate: true,
-      coins: true,
-      isDeleted: true,
-      deletedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-  return users;
+  return await userRepo.findAll({ includeDeleted });
 }
 
 async function deleteUser({ userId, hardDelete = false }) {
   if (hardDelete) {
-    await prisma.user.delete({ where: { id: userId } });
+    await userRepo.hardDelete(userId);
     return { message: "Usuario eliminado permanentemente" };
   }
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { isDeleted: true, deletedAt: new Date() },
-  });
-
+  await userRepo.softDelete(userId);
   return { message: "Usuario desactivado (soft delete) correctamente" };
 }
 
@@ -248,33 +160,12 @@ async function updateUserRole({ userId, role }) {
     throw new ValidationError("Rol inválido");
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { role },
-    select: {
-      password: false,
-      id: true,
-      fullName: true,
-      username: true,
-      email: true,
-      profileImage: true,
-      role: true,
-      bio: true,
-      subscriptionType: true,
-      subscriptionEndDate: true,
-      coins: true,
-      isDeleted: true,
-      deletedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  return updatedUser;
+  return await userRepo.update(userId, { role });
 }
 
 export {
   isValidPassword,
+  isValidEmail,
   getUserByEmail,
   getUserById,
   updateUser,

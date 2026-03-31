@@ -1,7 +1,7 @@
 # 📊 Estado del Proyecto - Versal Backend
 
 > Última actualización: 31/03/2026  
-> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.2 (Nice to Have) ⏳
+> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Nice to Have) ⏳
 
 ---
 
@@ -14,8 +14,9 @@
 5. [Mejoras Adicionales Completadas](#mejoras-adicionales-completadas-31032026)
 6. [Fase 2 - Importantes (Completadas)](#fase-2---importantes-completadas-31032026)
 7. [Fase 3.1 - Optimizaciones de Código (Completadas)](#fase-31---optimizaciones-de-código-completadas-31032026)
-8. [Fase 3.2 - Nice to Have (Siguiente)](#fase-32---nice-to-have-siguiente)
-9. [Próximos Pasos](#próximos-pasos)
+8. [Fase 3.3 - Separación de Modelos (Completadas)](#fase-33---separación-de-modelos-completada-31032026)
+9. [Fase 3.4 - Nice to Have (Siguiente)](#fase-34---nice-to-have-siguiente)
+10. [Próximos Pasos](#próximos-pasos)
 
 ---
 
@@ -231,7 +232,45 @@ PostgreSQL (Base de datos)
 
 ---
 
-## Fase 3.2 - Nice to Have (Siguiente)
+## ✅ Fase 3.3 - Separación de Modelos (Completada 31/03/2026)
+
+### ✅ 1. Separar story.model.js en 3 Repositorios
+- **Antes**: Archivo monolítico `src/models/story.model.js` con:
+  - Mongoose schemas (legacy, no usado)
+  - 3 modelos mezclados: Story, Category, Tag
+  - Lógica de seed de datos
+  - ~100 líneas de código legacy
+- **Después**: 3 repositorios modernos con Prisma:
+  - ✅ `src/models/story.repository.js` - Capa de acceso a datos para Story (10 funciones)
+  - ✅ `src/models/category.repository.js` - Capa de acceso a datos para Category (7 funciones)
+  - ✅ `src/models/tag.repository.js` - Capa de acceso a datos para Tag (10 funciones)
+
+- **Tests Creados** (83+ tests nuevos):
+  - ✅ `src/__tests__/models/story.repository.test.js` - 30+ tests
+  - ✅ `src/__tests__/models/category.repository.test.js` - 25+ tests
+  - ✅ `src/__tests__/models/tag.repository.test.js` - 28+ tests
+
+- **Beneficios**:
+  - ✅ Separación de responsabilidades - Cada repositorio maneja un modelo
+  - ✅ Reutilizable - Lógica centralizada
+  - ✅ Testeable - Fácil de mockear
+  - ✅ Mantenible - Cambios en un lugar
+  - ✅ Escalable - Fácil agregar nuevos repositorios
+  - ✅ Moderno - Usa Prisma, no Mongoose legacy
+
+---
+
+## Fase 3.4 - Nice to Have (Siguiente)
+
+### ⏳ Tareas Pendientes
+
+1. [ ] Extraer lógica de upload a util reutilizable
+2. [ ] Transacciones de Prisma para operaciones críticas
+3. [ ] Repository pattern para otros modelos
+4. [ ] Tests unitarios y de integración completos
+5. [ ] Docker setup
+6. [ ] Inyección de dependencias
+7. [ ] Migrar followers/following a colección separada
 
 ---
 
@@ -241,13 +280,17 @@ PostgreSQL (Base de datos)
 ✅ Fase 1 completada - Todos los servicios migrados a Prisma + throw pattern  
 ✅ Mejoras adicionales completadas (7 mejoras)  
 ✅ Fase 2 completada - Limpieza y optimización  
-✅ Fase 3.1 completada - Schemas compartidos + Auto-loader de rutas
+✅ Fase 3.1 completada - Schemas compartidos + Auto-loader de rutas  
+✅ Fase 3.3 completada - Separación de story.model.js en 3 repositorios + 83+ tests
 
-### Próxima Fase (Fase 3.2 - Nice to Have)
-1. Separar story.model.js en 3 modelos
-2. Extraer lógica de upload a util reutilizable
-3. Transacciones de Prisma para operaciones críticas
-4. Repository pattern
+### Próxima Fase (Fase 3.4 - Nice to Have)
+1. Extraer lógica de upload a util reutilizable
+2. Transacciones de Prisma para operaciones críticas
+3. Repository pattern para otros modelos
+4. Tests unitarios y de integración completos
+5. Docker setup
+6. Inyección de dependencias
+7. Migrar followers/following a colección separada
 5. Tests unitarios y de integración completos
 6. Docker setup
 7. Inyección de dependencias
@@ -277,6 +320,6 @@ PostgreSQL (Base de datos)
 
 ---
 
-**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.2 (Nice to Have) ⏳  
-**Próximo paso**: Comenzar Fase 3.2 (Separar story.model.js, extraer lógica de upload, etc.)  
+**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Nice to Have) ⏳  
+**Próximo paso**: Comenzar Fase 3.4 (Extraer lógica de upload, transacciones de Prisma, etc.)  
 **Última actualización**: 31/03/2026

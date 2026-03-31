@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey ? new Stripe(stripeKey) : null;
-import prisma from '../../config/prisma.js';
+import * as userRepo from '../../models/user.repository.js';
+import * as transactionRepo from '../../models/transaction.repository.js';
 import { ValidationError, NotFoundError } from '../../utils/errors.js';
 import { COIN_PACKS, SUBSCRIPTION_PLANS } from '../../config/products.js';
 
@@ -20,7 +21,7 @@ async function createStripeCheckoutSessionForSubscription(userId, planId) {
     throw new ValidationError('Stripe no está configurado.')
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
+  const user = await userRepo.findById(userId);
   if (!user) {
     throw new NotFoundError('Usuario no encontrado.')
   }
@@ -35,10 +36,7 @@ async function createStripeCheckoutSessionForSubscription(userId, planId) {
       }
     })
     stripeCustomerId = customer.id
-    await prisma.user.update({
-      where: { id: userId },
-      data: { stripeCustomerId }
-    })
+    await userRepo.update(userId, { stripeCustomerId })
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -64,18 +62,16 @@ async function createStripeCheckoutSessionForSubscription(userId, planId) {
     }
   })
 
-  await prisma.transaction.create({
-    data: {
-      userId,
-      type: 'SUBSCRIPTION',
-      amount: 0,
-      currency: process.env.STRIPE_CURRENCY || 'usd',
-      status: 'PENDING',
-      metadata: {
-        planId: planId,
-        stripeCheckoutSessionId: session.id,
-        stripeCustomerId: stripeCustomerId
-      }
+  await transactionRepo.create({
+    userId,
+    type: 'SUBSCRIPTION',
+    amount: 0,
+    currency: process.env.STRIPE_CURRENCY || 'usd',
+    status: 'PENDING',
+    metadata: {
+      planId: planId,
+      stripeCheckoutSessionId: session.id,
+      stripeCustomerId: stripeCustomerId
     }
   })
 
@@ -87,7 +83,7 @@ async function createStripeCheckoutSessionForCoinPack(userId, coinPackId) {
     throw new ValidationError('Stripe no está configurado.')
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
+  const user = await userRepo.findById(userId);
   if (!user) {
     throw new NotFoundError('Usuario no encontrado.')
   }
@@ -102,10 +98,7 @@ async function createStripeCheckoutSessionForCoinPack(userId, coinPackId) {
       }
     })
     stripeCustomerId = customer.id
-    await prisma.user.update({
-      where: { id: userId },
-      data: { stripeCustomerId }
-    })
+    await userRepo.update(userId, { stripeCustomerId })
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -126,18 +119,16 @@ async function createStripeCheckoutSessionForCoinPack(userId, coinPackId) {
     }
   })
 
-  await prisma.transaction.create({
-    data: {
-      userId,
-      type: 'TOPUP',
-      amount: 0,
-      currency: process.env.STRIPE_CURRENCY || 'usd',
-      status: 'PENDING',
-      metadata: {
-        coinPackId: coinPackId,
-        stripeCheckoutSessionId: session.id,
-        stripeCustomerId: stripeCustomerId
-      }
+  await transactionRepo.create({
+    userId,
+    type: 'TOPUP',
+    amount: 0,
+    currency: process.env.STRIPE_CURRENCY || 'usd',
+    status: 'PENDING',
+    metadata: {
+      coinPackId: coinPackId,
+      stripeCheckoutSessionId: session.id,
+      stripeCustomerId: stripeCustomerId
     }
   })
 
@@ -149,14 +140,7 @@ async function handleStripeWebhookEvent(event) {
     case 'checkout.session.completed':
       const session = event.data.object
 
-      const transaction = await prisma.transaction.findFirst({
-        where: {
-          metadata: {
-            path: ['stripeCheckoutSessionId'],
-            equals: session.id
-          }
-        }
-      })
+      const transaction = await transactionRepo.findByMetadata('stripeCheckoutSessionId', session.id);
 
       if (transaction) {
         if (transaction.status === 'COMPLETED') {
@@ -174,41 +158,32 @@ async function handleStripeWebhookEvent(event) {
           )
         }
 
-        await prisma.transaction.update({
-          where: { id: transaction.id },
-          data: {
-            status: 'COMPLETED',
-            amount: session.amount_total / 100,
-            currency: session.currency,
-            metadata: {
-              ...transaction.metadata,
-              stripeCustomerId: session.customer,
-              stripePaymentIntentId: paymentIntentOrSubscription?.id
-            }
+        await transactionRepo.update(transaction.id, {
+          status: 'COMPLETED',
+          amount: session.amount_total / 100,
+          currency: session.currency,
+          metadata: {
+            ...transaction.metadata,
+            stripeCustomerId: session.customer,
+            stripePaymentIntentId: paymentIntentOrSubscription?.id
           }
         })
 
         const userId = session.metadata.userId
-        const user = await prisma.user.findUnique({ where: { id: userId } })
+        const user = await userRepo.findById(userId);
 
         if (user) {
           if (session.metadata.type === 'subscription') {
-            await prisma.user.update({
-              where: { id: userId },
-              data: {
-                subscriptionType: 'PREMIUM',
-                subscriptionEndDate: null
-              }
+            await userRepo.update(userId, {
+              subscriptionType: 'PREMIUM',
+              subscriptionEndDate: null
             })
           } else if (session.metadata.type === 'coin_pack_purchase') {
             const coinPackId = session.metadata.coinPackId
             const coinsToAdd = getCoinsForPack(coinPackId)
 
             if (coinsToAdd > 0) {
-              await prisma.user.update({
-                where: { id: userId },
-                data: { coins: { increment: coinsToAdd } }
-              })
+              await userRepo.update(userId, { coins: { increment: coinsToAdd } })
             }
           }
         }
@@ -224,28 +199,21 @@ async function handleStripeWebhookEvent(event) {
         const userIdFromMetadata = subscription.metadata.prismaUserId
 
         if (userIdFromMetadata) {
-          const user = await prisma.user.findUnique({
-            where: { id: userIdFromMetadata }
-          })
+          const user = await userRepo.findById(userIdFromMetadata);
           if (user && user.subscriptionType !== 'PREMIUM') {
-            await prisma.user.update({
-              where: { id: userIdFromMetadata },
-              data: { subscriptionType: 'PREMIUM' }
-            })
+            await userRepo.update(userIdFromMetadata, { subscriptionType: 'PREMIUM' })
           }
 
-          await prisma.transaction.create({
-            data: {
-              userId: userIdFromMetadata,
-              type: 'SUBSCRIPTION',
-              amount: invoice.amount_paid / 100,
-              currency: invoice.currency,
-              status: 'COMPLETED',
-              metadata: {
-                renewal: true,
-                invoiceId: invoice.id,
-                planId: subscription.items.data[0].price.id
-              }
+          await transactionRepo.create({
+            userId: userIdFromMetadata,
+            type: 'SUBSCRIPTION',
+            amount: invoice.amount_paid / 100,
+            currency: invoice.currency,
+            status: 'COMPLETED',
+            metadata: {
+              renewal: true,
+              invoiceId: invoice.id,
+              planId: subscription.items.data[0].price.id
             }
           })
         }
@@ -260,9 +228,7 @@ async function handleStripeWebhookEvent(event) {
         )
         const userIdFromMetadata = subscription.metadata.prismaUserId
         if (userIdFromMetadata) {
-          const user = await prisma.user.findUnique({
-            where: { id: userIdFromMetadata }
-          })
+          const user = await userRepo.findById(userIdFromMetadata);
           if (user) {
             // Log payment failure
           }
@@ -275,29 +241,17 @@ async function handleStripeWebhookEvent(event) {
 
       const userIdSubDeleted = deletedSubscription.metadata.prismaUserId
       if (userIdSubDeleted) {
-        const user = await prisma.user.findUnique({
-          where: { id: userIdSubDeleted }
-        })
+        const user = await userRepo.findById(userIdSubDeleted);
         if (user) {
-          await prisma.user.update({
-            where: { id: userIdSubDeleted },
-            data: {
-              subscriptionType: 'BASIC',
-              subscriptionEndDate: new Date()
-            }
+          await userRepo.update(userIdSubDeleted, {
+            subscriptionType: 'BASIC',
+            subscriptionEndDate: new Date()
           })
         }
       }
 
-      await prisma.transaction.updateMany({
-        where: {
-          metadata: {
-            path: ['stripeSubscriptionId'],
-            equals: deletedSubscription.id
-          },
-          status: 'COMPLETED'
-        },
-        data: { status: 'CANCELED' }
+      await transactionRepo.updateManyByMetadata('stripeSubscriptionId', deletedSubscription.id, {
+        status: 'CANCELED'
       })
       break
 
@@ -322,10 +276,7 @@ function getCoinsForPack(coinPackId) {
 }
 
 async function getUserTransactions(userId) {
-  const transactions = await prisma.transaction.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' }
-  })
+  const transactions = await transactionRepo.findByUser(userId);
   return { transactions }
 }
 

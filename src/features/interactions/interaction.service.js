@@ -1,60 +1,29 @@
-import prisma from "../../config/prisma.js";
+import * as interactionRepo from "../../models/interaction.repository.js";
+import * as chapterRepo from "../../models/chapter.repository.js";
+import * as storyRepo from "../../models/story.repository.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors.js"; 
 
 
 async function updateStoryTotalLikes(storyId) {
-  const totalLikes = await prisma.chapterLike.count({
-    where: {
-      chapter: {
-        storyId,
-      },
-    },
-  });
-
-  await prisma.story.update({
-    where: { id: storyId },
-    data: { viewCount: totalLikes },
-  });
+  const totalLikes = await interactionRepo.countLikesByStory(storyId);
+  await storyRepo.update(storyId, { viewCount: totalLikes });
 }
 
 async function addInteractionToChapter({ chapterId, userId, interactionType, text }) {
   if (interactionType === "like") {
-    const chapter = await prisma.chapter.findUnique({
-      where: { id: chapterId },
-      select: { storyId: true },
-    });
-
+    const chapter = await chapterRepo.findById(chapterId);
     if (!chapter) {
       throw new NotFoundError("Capítulo no encontrado");
     }
 
-    const existingLike = await prisma.chapterLike.findUnique({
-      where: {
-        userId_chapterId: {
-          userId,
-          chapterId,
-        },
-      },
-    });
+    const existingLike = await interactionRepo.findLike(userId, chapterId);
 
     if (existingLike) {
-      await prisma.chapterLike.delete({
-        where: {
-          userId_chapterId: {
-            userId,
-            chapterId,
-          },
-        },
-      });
+      await interactionRepo.removeLike(userId, chapterId);
       await updateStoryTotalLikes(chapter.storyId);
       return { status: "unliked", message: "Me gusta quitado." };
     } else {
-      const like = await prisma.chapterLike.create({
-        data: {
-          userId,
-          chapterId,
-        },
-      });
+      const like = await interactionRepo.createLike(userId, chapterId);
       await updateStoryTotalLikes(chapter.storyId);
       return { status: "liked", like, message: "¡Me gusta!" };
     }
@@ -65,25 +34,12 @@ async function addInteractionToChapter({ chapterId, userId, interactionType, tex
       throw new ValidationError("El texto del comentario es requerido.");
     }
 
-    const chapter = await prisma.chapter.findUnique({
-      where: { id: chapterId },
-    });
-
+    const chapter = await chapterRepo.findById(chapterId);
     if (!chapter) {
       throw new NotFoundError("Capítulo no encontrado");
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        content: text,
-        userId,
-        chapterId,
-      },
-      include: {
-        user: { select: { username: true, profileImage: true } },
-      },
-    });
-
+    const comment = await interactionRepo.createComment(userId, chapterId, text);
     return { comment, message: "Comentario publicado." };
   }
 
@@ -91,35 +47,13 @@ async function addInteractionToChapter({ chapterId, userId, interactionType, tex
 }
 
 async function getInteractionsForChapter(chapterId) {
-  const chapter = await prisma.chapter.findUnique({
-    where: { id: chapterId },
-  });
-
+  const chapter = await chapterRepo.findById(chapterId);
   if (!chapter) {
     throw new NotFoundError("Capítulo no encontrado");
   }
 
-  const likes = await prisma.chapterLike.findMany({
-    where: { chapterId },
-    include: {
-      user: { select: { username: true, profileImage: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const comments = await prisma.comment.findMany({
-    where: { chapterId, isDeleted: false },
-    include: {
-      user: { select: { username: true, profileImage: true } },
-      replies: {
-        where: { isDeleted: false },
-        include: {
-          user: { select: { username: true, profileImage: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const likes = await interactionRepo.findLikesByChapter(chapterId);
+  const comments = await interactionRepo.findCommentsByChapter(chapterId);
 
   return {
     interactions: {
@@ -130,10 +64,7 @@ async function getInteractionsForChapter(chapterId) {
 }
 
 async function deleteInteraction({ interactionId, userId, userRole }) {
-  const comment = await prisma.comment.findUnique({
-    where: { id: interactionId },
-    include: { chapter: { select: { storyId: true } } },
-  });
+  const comment = await interactionRepo.findCommentById(interactionId);
 
   if (!comment) {
     throw new NotFoundError("Comentario no encontrado");
@@ -143,14 +74,7 @@ async function deleteInteraction({ interactionId, userId, userRole }) {
     throw new ForbiddenError("No autorizado para eliminar este comentario");
   }
 
-  await prisma.comment.update({
-    where: { id: interactionId },
-    data: {
-      isDeleted: true,
-      deletedAt: new Date(),
-    },
-  });
-
+  await interactionRepo.softDeleteComment(interactionId);
   return { message: "Comentario eliminado exitosamente." };
 }
 
