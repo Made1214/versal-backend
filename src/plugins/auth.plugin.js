@@ -1,33 +1,13 @@
-const fp = require('fastify-plugin')
-const userService = require('../features/users/user.service')
+const fp = require('fastify-plugin');
+const isAuthenticated = require('../middlewares/isAuthenticated');
 
+/**
+ * Plugin de autenticación para Fastify
+ * Decorador 'authenticate' que verifica JWT y usuario activo
+ */
 async function authPlugin(fastify) {
-  fastify.decorate('authenticate', async function (request, reply) {
-    try {
-      await request.jwtVerify()
-
-      // Validar usuario activo / no eliminado.
-      const userId = request.user && request.user.userId
-      if (!userId) {
-        return reply.code(401).send({ error: 'Unauthorized' })
-      }
-
-      try {
-        const user = await userService.getUserById({ userId })
-        if (!user || user.isDeleted) {
-          return reply
-            .code(403)
-            .send({ error: 'Cuenta de usuario eliminada o desactivada' })
-        }
-      } catch (err) {
-        return reply
-          .code(403)
-          .send({ error: 'Cuenta de usuario eliminada o desactivada' })
-      }
-    } catch (err) {
-      reply.code(401).send({ error: 'Unauthorized' })
-    }
-  })
+  // Decorador para verificar autenticación
+  fastify.decorate('authenticate', isAuthenticated);
 }
 
-module.exports = fp(authPlugin)
+module.exports = fp(authPlugin);
