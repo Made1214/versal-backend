@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const interactionSchema = new mongoose.Schema(
   {
@@ -39,4 +39,4 @@ interactionSchema.index(
   },
 );
 
-module.exports = mongoose.model("Interaction", interactionSchema);
+export default mongoose.model("Interaction", interactionSchema);

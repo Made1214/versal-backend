@@ -1,8 +1,8 @@
-const storyService = require("./story.service");
-const fs = require("fs");
-const util = require("util");
-const path = require("path");
-const { pipeline } = require("stream");
+import * as storyService from "./story.service.js";
+import fs from "fs";
+import util from "util";
+import path from "path";
+import { pipeline } from "stream";
 const pump = util.promisify(pipeline);
 
 // Controlador para crear una nueva historia
@@ -129,7 +129,7 @@ async function getAllTags(request, reply) {
   reply.send({ tags });
 }
 
-module.exports = {
+export {
   createStory,
   getStoryById,
   getAllStories,

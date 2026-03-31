@@ -1,4 +1,4 @@
-const reportService = require("./report.service");
+import * as reportService from "./report.service.js";
 
 // Crear un reporte
 async function createReport(request, reply) {
@@ -23,7 +23,7 @@ async function updateReportStatus(request, reply) {
   reply.send(result);
 }
 
-module.exports = {
+export {
   createReport,
   getAllReports,
   updateReportStatus,

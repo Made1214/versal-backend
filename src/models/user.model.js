@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const subscriptionSchema = new mongoose.Schema({
   type: { type: String, enum: ["basic", "premium"], default: "basic" },
@@ -49,4 +49,4 @@ const userSchema = new mongoose.Schema({
 });
 
 const UserModel = mongoose.model("User", userSchema);
-module.exports = UserModel;
+export default UserModel;

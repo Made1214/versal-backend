@@ -1,5 +1,5 @@
-const prisma = require("../../config/prisma");
-const { NotFoundError, ValidationError } = require("../../utils/errors");
+import prisma from "../../config/prisma.js";
+import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 async function toggleFavorite(userId, storyId) {
   const story = await prisma.story.findUnique({ where: { id: storyId } });
@@ -74,7 +74,7 @@ async function getFavoriteStoriesByUser(userId) {
   return { stories };
 }
 
-module.exports = {
+export {
   toggleFavorite,
   getFavoriteStoriesByUser,
   checkIsFavorite,

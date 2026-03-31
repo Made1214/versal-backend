@@ -1,12 +1,13 @@
-const fp = require('fastify-plugin');
-const config = require('../config/index');
+import fp from 'fastify-plugin';
+import fastifyCors from '@fastify/cors';
+import config from '../config/index.js';
 
 /**
  * Plugin de CORS para Fastify
  * Configura CORS con orígenes específicos desde variables de entorno
  */
 async function corsPlugin(fastify) {
-  fastify.register(require('@fastify/cors'), {
+  fastify.register(fastifyCors, {
     origin: config.CORS_ORIGINS_ARRAY,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -15,4 +16,4 @@ async function corsPlugin(fastify) {
   });
 }
 
-module.exports = fp(corsPlugin);
+export default fp(corsPlugin);

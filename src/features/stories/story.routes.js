@@ -1,7 +1,5 @@
-
-
-const storyController = require("./story.controller");
-const {
+import * as storyController from "./story.controller.js";
+import {
   createStorySchema,
   getStoryByIdSchema,
   getAllStoriesSchema,
@@ -13,7 +11,7 @@ const {
   getAllCategoriesSchema,
   getAllTagsSchema,
   authorIdParamSchema,
-} = require("./story.schema");
+} from "./story.schema.js";
 
 async function storyRoutes(fastify) {
   fastify.get("/", { schema: getAllStoriesSchema }, storyController.getAllStories);
@@ -65,4 +63,4 @@ async function storyRoutes(fastify) {
   fastify.get("/tag/:tagName", { schema: getStoriesByTagSchema }, storyController.getStoriesByTag);
 }
 
-module.exports = storyRoutes;
+export default storyRoutes;

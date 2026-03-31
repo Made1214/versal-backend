@@ -110,7 +110,7 @@ const logoutSchema = {
   },
 };
 
-module.exports = {
+export {
   loginSchema,
   registerSchema,
   refreshSchema,

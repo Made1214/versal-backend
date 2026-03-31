@@ -63,7 +63,7 @@ const userIdParamSchema = {
   },
 };
 
-module.exports = {
+export {
   updateProfileSchema,
   changePasswordSchema,
   updateRoleSchema,

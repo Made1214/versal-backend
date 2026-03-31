@@ -1,38 +1,43 @@
 // Versal/backend/app.js
-const path = require('path');
-const fastify = require('fastify')({ logger: true });
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import fastifyLib from 'fastify';
+
+const fastify = fastifyLib({ logger: true });
 
 // Configuración centralizada (valida env vars al cargar)
-const config = require('./src/config/index');
+import config from './src/config/index.js';
 
 // Importar componentes de infraestructura
-const connectDB = require('./src/config/db');
-const errorHandler = require('./src/middlewares/errorHandler');
-const corsPlugin = require('./src/plugins/cors.plugin');
-const helmetPlugin = require('./src/plugins/helmet.plugin');
-const rateLimitPlugin = require('./src/plugins/rateLimit.plugin');
-const authPlugin = require('./src/plugins/auth.plugin');
+import errorHandler from './src/middlewares/errorHandler.js';
+import corsPlugin from './src/plugins/cors.plugin.js';
+import helmetPlugin from './src/plugins/helmet.plugin.js';
+import rateLimitPlugin from './src/plugins/rateLimit.plugin.js';
+import authPlugin from './src/plugins/auth.plugin.js';
 
 // Importar rutas
-const storyRoutes = require('./src/features/stories/story.routes');
-const userRoutes = require('./src/features/users/user.routes');
-const transactionRoutes = require('./src/features/transactions/transaction.routes');
-const interactionRoutes = require('./src/features/interactions/interaction.routes');
-const chapterRoutes = require('./src/features/chapters/chapter.routes');
-const favoriteRoutes = require('./src/features/favorites/favorite.routes');
-const reportRoutes = require('./src/features/reports/report.routes');
-const donationRoutes = require('./src/features/donations/donation.routes');
-const authRoutes = require('./src/features/auth/auth.routes');
+import storyRoutes from './src/features/stories/story.routes.js';
+import userRoutes from './src/features/users/user.routes.js';
+import transactionRoutes from './src/features/transactions/transaction.routes.js';
+import interactionRoutes from './src/features/interactions/interaction.routes.js';
+import chapterRoutes from './src/features/chapters/chapter.routes.js';
+import favoriteRoutes from './src/features/favorites/favorite.routes.js';
+import reportRoutes from './src/features/reports/report.routes.js';
+import donationRoutes from './src/features/donations/donation.routes.js';
+import authRoutes from './src/features/auth/auth.routes.js';
 
 // Importar plugins de Fastify
-const jwt = require('@fastify/jwt');
-const fastifyMultipart = require('@fastify/multipart');
-const fastifyStatic = require('@fastify/static');
-const fastifyCookie = require('@fastify/cookie');
-const fastifyRawBody = require('fastify-raw-body');
+import jwt from '@fastify/jwt';
+import fastifyMultipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import fastifyRawBody from 'fastify-raw-body';
+import fastifyOAuth2 from '@fastify/oauth2';
 
-// Conectar a la base de datos
-connectDB();
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 
 // ============================================
 // REGISTRAR PLUGINS DE SEGURIDAD Y UTILIDAD
@@ -56,7 +61,7 @@ fastify.register(jwt, {
 fastify.register(authPlugin);
 
 // Google OAuth2 
-fastify.register(require('@fastify/oauth2'), {
+fastify.register(fastifyOAuth2, {
   name: 'googleOAuth2',
   scope: ['openid', 'email', 'profile'],
   credentials: {
@@ -72,10 +77,8 @@ fastify.register(require('@fastify/oauth2'), {
     }
   },
   startRedirectPath: '/api/auth/oauth/google',
+  callbackUri: config.GOOGLE_OAUTH_CALLBACK_URL,
 });
-
-// Cookies
-fastify.register(fastifyCookie);
 
 // Multipart
 fastify.register(fastifyMultipart);

@@ -1,9 +1,9 @@
-const reportController = require("./report.controller");
-const {
+import * as reportController from "./report.controller.js";
+import {
   createReportSchema,
   getAllReportsSchema,
   updateReportStatusSchema,
-} = require("./report.schema");
+} from "./report.schema.js";
 
 async function adminAuthHook(request, reply) {
   if (request.user.role !== "admin") {
@@ -36,4 +36,4 @@ async function reportRoutes(fastify) {
   });
 }
 
-module.exports = reportRoutes;
+export default reportRoutes;

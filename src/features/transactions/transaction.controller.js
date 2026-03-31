@@ -1,10 +1,11 @@
-const transactionService = require('./transaction.service')
+import * as transactionService from './transaction.service.js'
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error(
     'STRIPE_SECRET_KEY no está definido. Debe establecerse en .env'
   )
 }
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+import Stripe from 'stripe'
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 async function getStripeBalance(request, reply) {
   const result = await transactionService.getStripeBalance()
@@ -66,7 +67,7 @@ async function getCoinPacks(request, reply) {
   reply.send(result)
 }
 
-module.exports = {
+export {
   createSubscriptionCheckout,
   createCoinPackCheckout,
   stripeWebhook,

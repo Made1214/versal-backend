@@ -1,5 +1,5 @@
-const prisma = require("../../config/prisma");
-const { NotFoundError, ValidationError, ForbiddenError } = require("../../utils/errors"); 
+import prisma from "../../config/prisma.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors.js"; 
 
 
 async function updateStoryTotalLikes(storyId) {
@@ -154,7 +154,7 @@ async function deleteInteraction({ interactionId, userId, userRole }) {
   return { message: "Comentario eliminado exitosamente." };
 }
 
-module.exports = {
+export {
   getInteractionsForChapter,
   addInteractionToChapter,
   deleteInteraction,

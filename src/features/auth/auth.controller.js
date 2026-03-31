@@ -1,5 +1,5 @@
-const authService = require("./auth.service");
-const userService = require("../users/user.service");
+import * as authService from "./auth.service.js";
+import * as userService from "../users/user.service.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -164,7 +164,7 @@ async function resetPassword(request, reply) {
   return reply.code(200).send({ message: result.message });
 }
 
-module.exports = {
+export {
   register,
   login,
   refreshToken,

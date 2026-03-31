@@ -45,7 +45,7 @@ class ConflictError extends AppError {
   }
 }
 
-module.exports = {
+export {
   AppError,
   NotFoundError,
   ValidationError,

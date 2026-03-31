@@ -1,5 +1,5 @@
-const chapterController = require("./chapter.controller");
-const {
+import * as chapterController from "./chapter.controller.js";
+import {
   createChapterSchema,
   getChaptersByStorySchema,
   getChapterByIdSchema,
@@ -7,7 +7,7 @@ const {
   deleteChapterSchema,
   uploadChapterImageSchema,
   getPublishedChapterCountSchema,
-} = require("./chapter.schema");
+} from "./chapter.schema.js";
 
 async function chapterRoutes(fastify) {
   // --- Rutas Públicas ---
@@ -61,4 +61,4 @@ async function chapterRoutes(fastify) {
   });
 }
 
-module.exports = chapterRoutes;
+export default chapterRoutes;

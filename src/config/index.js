@@ -51,9 +51,15 @@ const schema = {
     // OAuth Google
     GOOGLE_CLIENT_ID: {
       type: 'string',
+      default: 'placeholder',
     },
     GOOGLE_CLIENT_SECRET: {
       type: 'string',
+      default: 'placeholder',
+    },
+    GOOGLE_OAUTH_CALLBACK_URL: {
+      type: 'string',
+      default: 'http://localhost:3000/api/auth/oauth/google/callback',
     },
     
     // Stripe (opcional)

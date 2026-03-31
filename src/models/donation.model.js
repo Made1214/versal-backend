@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const DonationSchema = new mongoose.Schema(
   {
@@ -37,4 +37,4 @@ const DonationSchema = new mongoose.Schema(
 
 const Donation = mongoose.model("Donation", DonationSchema);
 
-module.exports = Donation;
+export default Donation;

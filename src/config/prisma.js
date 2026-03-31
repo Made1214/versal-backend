@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client';
 
 const prisma =
   global.prisma ||
@@ -20,4 +20,4 @@ prisma.$on('query', (e) => {
   console.log(`Prisma query: ${e.query} params: ${e.params}`)
 })
 
-module.exports = prisma
+export default prisma;

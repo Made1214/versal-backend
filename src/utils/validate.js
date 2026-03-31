@@ -45,7 +45,7 @@ function validateUrl(url) {
   }
 }
 
-module.exports = {
+export {
   validateObjectId,
   validateUUID,
   validateUrl,

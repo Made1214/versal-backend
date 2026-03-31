@@ -1,11 +1,11 @@
-const fs = require("fs");
-const util = require("util");
-const path = require("path");
-const { pipeline } = require("stream");
+import fs from "fs";
+import util from "util";
+import path from "path";
+import { pipeline } from "stream";
 const pump = util.promisify(pipeline);
 
-const chapterService = require("./chapter.service");
-const { Story } = require("../../models/story.model");
+import * as chapterService from "./chapter.service.js";
+import { Story } from "../../models/story.model.js";
 
 // Controlador para crear un nuevo capítulo
 async function createChapter(request, reply) {
@@ -80,7 +80,7 @@ async function getPublishedChapterCount(request, reply) {
   reply.send({ publishedChapterCount });
 }
 
-module.exports = {
+export {
   createChapter,
   getChaptersByStory,
   getChapterById,

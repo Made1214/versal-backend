@@ -1,4 +1,4 @@
-const config = require('./index');
+import config from './index.js';
 
 /**
  * Configuración del logger de Fastify (Pino)
@@ -52,4 +52,4 @@ const loggerConfig = {
   },
 };
 
-module.exports = loggerConfig;
+export default loggerConfig;

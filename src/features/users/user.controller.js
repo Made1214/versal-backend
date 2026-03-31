@@ -1,9 +1,9 @@
-const fs = require("fs");
-const util = require("util");
-const path = require("path");
-const { pipeline } = require("stream");
+import fs from "fs";
+import util from "util";
+import path from "path";
+import { pipeline } from "stream";
 const pump = util.promisify(pipeline);
-const userService = require("./user.service");
+import * as userService from "./user.service.js";
 
 // Obtener usuario actual
 async function getCurrentUser(req, reply) {
@@ -155,7 +155,7 @@ async function updateUserRole(req, reply) {
   reply.send(result);
 }
 
-module.exports = {
+export {
   getCurrentUser,
   updateProfile,
   changePassword,

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const CategorySchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -98,4 +98,4 @@ async function seedDefaults() {
 
 mongoose.connection.once("open", seedDefaults);
 
-module.exports = { Category, Tag, Story };
+export { Category, Tag, Story };

@@ -1,4 +1,4 @@
-const interactionService = require("./interaction.service");
+import * as interactionService from "./interaction.service.js";
 
 async function addInteractionToChapter(request, reply) {
   const { id: chapterId } = request.params;
@@ -47,7 +47,7 @@ async function deleteInteraction(request, reply) {
   reply.send(result);
 }
 
-module.exports = {
+export {
   getInteractionsForChapter,
   addInteractionToChapter,
   deleteInteraction,

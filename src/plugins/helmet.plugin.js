@@ -1,11 +1,12 @@
-const fp = require('fastify-plugin');
+import fp from 'fastify-plugin';
+import fastifyHelmet from '@fastify/helmet';
 
 /**
  * Plugin de helmet para Fastify
  * Agrega headers de seguridad HTTP
  */
 async function helmetPlugin(fastify) {
-  fastify.register(require('@fastify/helmet'), {
+  fastify.register(fastifyHelmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -37,4 +38,4 @@ async function helmetPlugin(fastify) {
   });
 }
 
-module.exports = fp(helmetPlugin);
+export default fp(helmetPlugin);

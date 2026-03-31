@@ -1,5 +1,5 @@
-const fp = require('fastify-plugin');
-const isAuthenticated = require('../middlewares/isAuthenticated');
+import fp from 'fastify-plugin';
+import isAuthenticated from '../middlewares/isAuthenticated.js';
 
 /**
  * Plugin de autenticación para Fastify
@@ -10,4 +10,4 @@ async function authPlugin(fastify) {
   fastify.decorate('authenticate', isAuthenticated);
 }
 
-module.exports = fp(authPlugin);
+export default fp(authPlugin);

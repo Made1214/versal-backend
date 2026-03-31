@@ -56,6 +56,6 @@ const makeDonationSchema = {
   },
 };
 
-module.exports = {
+export {
   makeDonationSchema,
 };

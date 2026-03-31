@@ -179,7 +179,7 @@ const getCoinPacksSchema = {
   },
 };
 
-module.exports = {
+export {
   createSubscriptionCheckoutSchema,
   createCoinPackCheckoutSchema,
   stripeWebhookSchema,

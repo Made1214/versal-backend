@@ -31,4 +31,4 @@ const SUBSCRIPTION_PLANS = [
   },
 ];
 
-module.exports = { COIN_PACKS, SUBSCRIPTION_PLANS };
+export { COIN_PACKS, SUBSCRIPTION_PLANS };

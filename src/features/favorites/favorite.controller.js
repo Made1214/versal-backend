@@ -1,4 +1,4 @@
-const favoriteService = require("./favorite.service");
+import * as favoriteService from "./favorite.service.js";
 
 async function toggleFavorite(request, reply) {
   const { storyId } = request.params;
@@ -21,7 +21,7 @@ async function getIsFavorite(request, reply) {
   reply.code(200).send(result);
 }
 
-module.exports = {
+export {
   toggleFavorite,
   getIsFavorite,
   getFavoriteStories,

@@ -334,7 +334,7 @@ const authorIdParamSchema = {
   required: ["authorId"],
 };
 
-module.exports = {
+export {
   authorIdParamSchema,
   createStorySchema,
   getStoryByIdSchema,

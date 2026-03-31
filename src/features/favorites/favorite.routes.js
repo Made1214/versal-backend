@@ -1,4 +1,4 @@
-const favoriteController = require("./favorite.controller");
+import * as favoriteController from "./favorite.controller.js";
 
 async function favoriteRoutes(fastify) {
   fastify.register(async function (privateRoutes) {
@@ -15,4 +15,4 @@ async function favoriteRoutes(fastify) {
   });
 }
 
-module.exports = favoriteRoutes;
+export default favoriteRoutes;

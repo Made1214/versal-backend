@@ -1,10 +1,10 @@
-const userController = require('./user.controller')
-const {
+import * as userController from './user.controller.js';
+import {
   updateProfileSchema,
   changePasswordSchema,
   userIdParamSchema,
   userBase
-} = require('./user.schema')
+} from './user.schema.js';
 
 async function userRoutes(fastify) {
   // Seguidores
@@ -106,4 +106,4 @@ async function userRoutes(fastify) {
   })
 }
 
-module.exports = userRoutes
+export default userRoutes;

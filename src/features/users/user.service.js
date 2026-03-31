@@ -1,10 +1,10 @@
-const prisma = require("../../config/prisma");
-const bcrypt = require("bcrypt");
-const { 
+import prisma from "../../config/prisma.js";
+import bcrypt from "bcrypt";
+import { 
   NotFoundError, 
   ValidationError, 
   ConflictError,
-} = require("../../utils/errors");
+} from "../../utils/errors.js";
 
 // Validación de contraseña (compartida con auth.service.js)
 function isValidPassword(password) {
@@ -268,7 +268,7 @@ async function updateUserRole({ userId, role }) {
   return updatedUser;
 }
 
-module.exports = {
+export {
   isValidPassword,
   getUserByEmail,
   getUserById,

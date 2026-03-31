@@ -1,4 +1,5 @@
-const fp = require('fastify-plugin');
+import fp from 'fastify-plugin';
+import fastifyRateLimit from '@fastify/rate-limit';
 
 /**
  * Plugin de rate limiting para Fastify
@@ -6,7 +7,7 @@ const fp = require('fastify-plugin');
  */
 async function rateLimitPlugin(fastify) {
   // Rate limit para endpoints públicos (login, registro, etc.)
-  fastify.register(require('@fastify/rate-limit'), {
+  fastify.register(fastifyRateLimit, {
     max: 100,
     timeWindow: '1 minute',
     keyGenerator: (request) => request.ip,
@@ -18,7 +19,7 @@ async function rateLimitPlugin(fastify) {
   });
 
   // Rate limit más estricto para endpoints de autenticación
-  fastify.register(require('@fastify/rate-limit'), {
+  fastify.register(fastifyRateLimit, {
     name: 'auth-rate-limit',
     max: 10,
     timeWindow: '1 minute',
@@ -31,7 +32,7 @@ async function rateLimitPlugin(fastify) {
   });
 
   // Rate limit para endpoints privados
-  fastify.register(require('@fastify/rate-limit'), {
+  fastify.register(fastifyRateLimit, {
     name: 'private-rate-limit',
     max: 1000,
     timeWindow: '1 minute',
@@ -44,4 +45,4 @@ async function rateLimitPlugin(fastify) {
   });
 }
 
-module.exports = fp(rateLimitPlugin);
+export default fp(rateLimitPlugin);

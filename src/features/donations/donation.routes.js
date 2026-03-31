@@ -1,5 +1,5 @@
-const donationController = require("./donation.controller");
-const { makeDonationSchema } = require("./donation.schema");
+import * as donationController from "./donation.controller.js";
+import { makeDonationSchema } from "./donation.schema.js";
 
 async function donationRoutes(fastify) {
   fastify.register(async function (privateRoutes) {
@@ -13,4 +13,4 @@ async function donationRoutes(fastify) {
   });
 }
 
-module.exports = donationRoutes;
+export default donationRoutes;

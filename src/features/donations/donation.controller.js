@@ -1,4 +1,4 @@
-const donationService = require("./donation.service");
+import * as donationService from "./donation.service.js";
 
 async function makeDonation(request, reply) {
   const { userId: donatorId } = request.user;
@@ -9,6 +9,6 @@ async function makeDonation(request, reply) {
   reply.code(201).send({ success: true, donation: result.donation });
 }
 
-module.exports = {
+export {
   makeDonation,
 };

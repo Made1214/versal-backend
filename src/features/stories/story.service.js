@@ -1,5 +1,5 @@
-const prisma = require("../../config/prisma");
-const { NotFoundError, ValidationError } = require("../../utils/errors");
+import prisma from "../../config/prisma.js";
+import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 async function createStory(storyData) {
   const { authorId, category: categoryName, tags: tagNames, ...rest } = storyData;
@@ -248,7 +248,7 @@ async function getAllTags() {
   return tags;
 }
 
-module.exports = {
+export {
   createStory,
   getStoryById,
   getAllStories,

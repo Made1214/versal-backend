@@ -1,5 +1,5 @@
-const prisma = require('../../config/prisma')
-const { ValidationError, NotFoundError, ConflictError } = require('../../utils/errors')
+import prisma from '../../config/prisma.js';
+import { ValidationError, NotFoundError, ConflictError } from '../../utils/errors.js';
 
 async function makeDonation(donatorId, storyId, amount, message) {
   if (amount <= 0) {
@@ -60,4 +60,4 @@ async function makeDonation(donatorId, storyId, amount, message) {
   return { success: true, donation: newDonation }
 }
 
-module.exports = { makeDonation }
+export { makeDonation };

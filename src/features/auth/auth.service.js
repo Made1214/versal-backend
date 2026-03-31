@@ -1,13 +1,13 @@
-const crypto = require("crypto");
-const bcrypt = require("bcrypt");
-const prisma = require("../../config/prisma");
-const userService = require("../users/user.service");
-const { 
+import crypto from "crypto";
+import bcrypt from "bcrypt";
+import prisma from "../../config/prisma.js";
+import * as userService from "../users/user.service.js";
+import { 
   NotFoundError, 
   ValidationError, 
   UnauthorizedError,
   ConflictError 
-} = require("../../utils/errors");
+} from "../../utils/errors.js";
 
 // Registra usuario usando userService.
 // - Comprueba que el email no exista y no esté eliminado.
@@ -178,7 +178,7 @@ function isValidPassword(password) {
   return regex.test(password);
 }
 
-module.exports = {
+export {
   registerUser,
   loginUser,
   saveRefreshToken,
@@ -187,4 +187,5 @@ module.exports = {
   requestPasswordReset,
   resetPassword,
   isValidPassword,
+  findOrCreateOAuthUser,
 };

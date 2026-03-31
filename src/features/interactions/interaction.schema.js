@@ -108,7 +108,7 @@ const deleteInteractionSchema = {
   },
 };
 
-module.exports = {
+export {
   addInteractionSchema,
   getInteractionsSchema,
   deleteInteractionSchema,

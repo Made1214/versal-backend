@@ -1,5 +1,5 @@
-const prisma = require("../../config/prisma");
-const { NotFoundError, ValidationError, ConflictError } = require("../../utils/errors");
+import prisma from "../../config/prisma.js";
+import { NotFoundError, ValidationError, ConflictError } from "../../utils/errors.js";
 
 async function createReport(reportData) {
   const { contentId, userId, target, reason, details } = reportData;
@@ -60,7 +60,7 @@ async function updateReportStatus(reportId, status) {
   return { report: updatedReport };
 }
 
-module.exports = {
+export {
   createReport,
   getAllReports,
   updateReportStatus,

@@ -1,9 +1,9 @@
-const interactionController = require("./interaction.controller");
-const {
-  addInteractionToChapter,
-  getInteractionsForChapter,
+import * as interactionController from "./interaction.controller.js";
+import {
+  addInteractionSchema,
+  getInteractionsSchema,
   deleteInteractionSchema,
-} = require("./interaction.schema");
+} from "./interaction.schema.js";
 
 async function interactionRoutes(fastify) {
   fastify.register(async function (privateRoutes) {
@@ -20,4 +20,4 @@ async function interactionRoutes(fastify) {
   fastify.get("/chapters/:id/interactions", interactionController.getInteractionsForChapter);
 }
 
-module.exports = interactionRoutes;
+export default interactionRoutes;

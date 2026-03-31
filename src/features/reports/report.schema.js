@@ -114,7 +114,7 @@ const updateReportStatusSchema = {
   },
 };
 
-module.exports = {
+export {
   createReportSchema,
   getAllReportsSchema,
   updateReportStatusSchema,

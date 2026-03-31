@@ -1,5 +1,5 @@
-const authController = require("./auth.controller");
-const {
+import * as authController from "./auth.controller.js";
+import {
   loginSchema,
   registerSchema,
   refreshSchema,
@@ -7,7 +7,7 @@ const {
   forgotPasswordSchema,
   resetPasswordSchema,
   meSchema,
-} = require("./auth.schema");
+} from "./auth.schema.js";
 
 async function authRoutes(fastify) {
   fastify.post(
@@ -49,4 +49,4 @@ async function authRoutes(fastify) {
   );
 }
 
-module.exports = authRoutes;
+export default authRoutes;

@@ -221,7 +221,7 @@ const getPublishedChapterCountSchema = {
   },
 };
 
-module.exports = {
+export {
   createChapterSchema,
   getChaptersByStorySchema,
   getChapterByIdSchema,

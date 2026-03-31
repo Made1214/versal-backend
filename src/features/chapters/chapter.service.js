@@ -1,10 +1,10 @@
-const prisma = require("../../config/prisma");
-const fs = require("fs");
-const util = require("util");
-const path = require("path");
-const { pipeline } = require("stream");
+import prisma from "../../config/prisma.js";
+import fs from "fs";
+import util from "util";
+import path from "path";
+import { pipeline } from "stream";
 const pump = util.promisify(pipeline);
-const { NotFoundError, ValidationError } = require("../../utils/errors");
+import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 // Crear un nuevo capítulo
 async function createChapter(fullChapterData) {
@@ -96,7 +96,7 @@ async function getPublishedChapterCount(storyId) {
   return count;
 }
 
-module.exports = {
+export {
   createChapter,
   getChaptersByStory,
   getChapterById,

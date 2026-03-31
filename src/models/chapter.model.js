@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ChapterSchema = new mongoose.Schema(
   {
@@ -37,4 +37,4 @@ ChapterSchema.index({ story: 1, chapterNumber: 1 }, { unique: true });
 
 const Chapter = mongoose.model("Chapter", ChapterSchema);
 
-module.exports = Chapter;
+export default Chapter;

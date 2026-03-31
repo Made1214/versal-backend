@@ -1,12 +1,12 @@
-const transactionController = require("./transaction.controller");
-const {
+import * as transactionController from "./transaction.controller.js";
+import {
   createSubscriptionCheckoutSchema,
   createCoinPackCheckoutSchema,
   stripeWebhookSchema,
   getUserTransactionsSchema,
   getSubscriptionPlansSchema,
   getCoinPacksSchema,
-} = require("./transaction.schema");
+} from "./transaction.schema.js";
 
 async function transactionRoutes(fastify) {
   fastify.post(
@@ -61,4 +61,4 @@ async function transactionRoutes(fastify) {
   });
 }
 
-module.exports = transactionRoutes;
+export default transactionRoutes;

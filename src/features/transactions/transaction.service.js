@@ -1,9 +1,9 @@
-const stripeKey = process.env.STRIPE_SECRET_KEY
-const stripe = stripeKey ? require('stripe')(stripeKey) : null
-const prisma = require('../../config/prisma')
-const { ValidationError, NotFoundError } = require('../../utils/errors')
-const { COIN_PACKS } = require('../../config/products')
-const { SUBSCRIPTION_PLANS } = require('../../config/products')
+import Stripe from 'stripe';
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey) : null;
+import prisma from '../../config/prisma.js';
+import { ValidationError, NotFoundError } from '../../utils/errors.js';
+import { COIN_PACKS, SUBSCRIPTION_PLANS } from '../../config/products.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080'
 
@@ -337,7 +337,7 @@ async function getCoinPacks() {
   return { packs: COIN_PACKS }
 }
 
-module.exports = {
+export {
   createStripeCheckoutSessionForSubscription,
   createStripeCheckoutSessionForCoinPack,
   handleStripeWebhookEvent,
@@ -345,4 +345,4 @@ module.exports = {
   getSubscriptionPlans,
   getCoinPacks,
   getStripeBalance
-}
+};
