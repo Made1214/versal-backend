@@ -18,7 +18,6 @@ import corsPlugin from './src/plugins/cors.plugin.js';
 import helmetPlugin from './src/plugins/helmet.plugin.js';
 import rateLimitPlugin from './src/plugins/rateLimit.plugin.js';
 import authPlugin from './src/plugins/auth.plugin.js';
-import { loadRoutes } from './src/utils/routeLoader.js';
 
 // Importar plugins de Fastify
 import jwt from '@fastify/jwt';
@@ -116,15 +115,33 @@ fastify.get('/health', async (request, reply) => {
   }
 });
 
+// Importar y registrar rutas manualmente
+import authRoutes from './src/features/auth/auth.routes.js';
+import storyRoutes from './src/features/stories/story.routes.js';
+import chapterRoutes from './src/features/chapters/chapter.routes.js';
+import userRoutes from './src/features/users/user.routes.js';
+import favoriteRoutes from './src/features/favorites/favorite.routes.js';
+import interactionRoutes from './src/features/interactions/interaction.routes.js';
+import reportRoutes from './src/features/reports/report.routes.js';
+import transactionRoutes from './src/features/transactions/transaction.routes.js';
+import donationRoutes from './src/features/donations/donation.routes.js';
+
+fastify.register(authRoutes, { prefix: '/api' });
+fastify.register(storyRoutes, { prefix: '/api/stories' });
+fastify.register(chapterRoutes, { prefix: '/api' });
+fastify.register(userRoutes, { prefix: '/api/users' });
+fastify.register(favoriteRoutes, { prefix: '/api/favorites' });
+fastify.register(interactionRoutes, { prefix: '/api' });
+fastify.register(reportRoutes, { prefix: '/api/reports' });
+fastify.register(transactionRoutes, { prefix: '/api' });
+fastify.register(donationRoutes, { prefix: '/api/donations' });
+
 // ============================================
 // INICIAR SERVIDOR
 // ============================================
 
 const start = async () => {
   try {
-    // Cargar rutas automáticamente desde src/features
-    await loadRoutes(fastify, './src/features');
-
     await fastify.listen({ port: config.PORT }, (err, address) => {
       if (err) {
         fastify.log.error(err);

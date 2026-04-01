@@ -138,6 +138,11 @@ describe('Report Service', () => {
       expect(prisma.report.update).toHaveBeenCalledWith({
         where: { id: 'report-123' },
         data: { status: 'REVIEWED' },
+        include: {
+          user: {
+            select: { username: true, email: true },
+          },
+        },
       });
     });
 

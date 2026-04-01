@@ -4,20 +4,6 @@
  */
 
 /**
- * Valida si una cadena es un ObjectId válido (formato MongoDB)
- * @param {string} id - El ID a validar
- * @returns {boolean} - true si es un ObjectId válido
- */
-function validateObjectId(id) {
-  if (typeof id !== 'string') {
-    return false;
-  }
-  // Regex para ObjectId MongoDB (24 caracteres hexadecimales)
-  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-  return objectIdRegex.test(id);
-}
-
-/**
  * Valida si una cadena es un UUID válido (formato v4)
  * @param {string} id - El ID a validar
  * @returns {boolean} - true si es un UUID válido

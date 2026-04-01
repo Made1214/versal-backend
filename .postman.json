@@ -1,14 +1,13 @@
 {
   "info": {
-    "name": "Versal API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "Versal API - Complete",
+    "description": "Colección completa de Versal API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000",
-      "type": "string"
-    }
+    {"key": "base_url", "value": "http://localhost:3000/api", "type": "string"},
+    {"key": "token", "value": "", "type": "string"}
   ],
   "item": [
     {
@@ -18,7 +17,7 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"fullName\": \"Test User\",\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}"
@@ -48,7 +47,7 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password123!\"\n}"
@@ -64,9 +63,7 @@
           "name": "Me (Protected)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
             "url": {
               "raw": "{{base_url}}/auth/me",
               "host": ["{{base_url}}"],
@@ -78,7 +75,7 @@
           "name": "Refresh Token",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "url": {
               "raw": "{{base_url}}/auth/refresh",
               "host": ["{{base_url}}"],
@@ -90,7 +87,7 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "url": {
               "raw": "{{base_url}}/auth/logout",
               "host": ["{{base_url}}"],
@@ -102,7 +99,7 @@
           "name": "Forgot Password",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"test@example.com\"\n}"
@@ -118,7 +115,7 @@
           "name": "Reset Password",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"test@example.com\",\n  \"token\": \"RESET_TOKEN_AQUI\",\n  \"newPassword\": \"NewPassword123!\"\n}"
@@ -127,6 +124,167 @@
               "raw": "{{base_url}}/auth/reset-password",
               "host": ["{{base_url}}"],
               "path": ["auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "OAuth Google",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/oauth/google",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "oauth", "google"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stories",
+      "item": [
+        {
+          "name": "List Stories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["stories"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Story",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories/:id",
+              "host": ["{{base_url}}"],
+              "path": ["stories", ":id"],
+              "variable": [{"key": "id", "value": "1"}]
+            }
+          }
+        },
+        {
+          "name": "Create Story (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mi Nueva Historia\",\n  \"description\": \"Una historia increíble\",\n  \"categoryId\": 1,\n  \"tagIds\": [1, 2],\n  \"coverImage\": \"https://example.com/cover.jpg\",\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/stories",
+              "host": ["{{base_url}}"],
+              "path": ["stories"]
+            }
+          }
+        },
+        {
+          "name": "Update Story (Protected)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Título Actualizado\",\n  \"description\": \"Descripción actualizada\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/stories/:id",
+              "host": ["{{base_url}}"],
+              "path": ["stories", ":id"],
+              "variable": [{"key": "id", "value": "1"}]
+            }
+          }
+        },
+        {
+          "name": "Delete Story (Protected)",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/stories/:id",
+              "host": ["{{base_url}}"],
+              "path": ["stories", ":id"],
+              "variable": [{"key": "id", "value": "1"}]
+            }
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories/categories",
+              "host": ["{{base_url}}"],
+              "path": ["stories", "categories"]
+            }
+          }
+        },
+        {
+          "name": "List Tags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories/tags",
+              "host": ["{{base_url}}"],
+              "path": ["stories", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Stories by Author (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/stories/author/:authorId",
+              "host": ["{{base_url}}"],
+              "path": ["stories", "author", ":authorId"],
+              "variable": [{"key": "authorId", "value": "1"}]
+            }
+          }
+        },
+        {
+          "name": "Stories by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories/category/:categoryName",
+              "host": ["{{base_url}}"],
+              "path": ["stories", "category", ":categoryName"],
+              "variable": [{"key": "categoryName", "value": "Romance"}]
+            }
+          }
+        },
+        {
+          "name": "Stories by Tag",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stories/tag/:tagName",
+              "host": ["{{base_url}}"],
+              "path": ["stories", "tag", ":tagName"],
+              "variable": [{"key": "tagName", "value": "fantasy"}]
             }
           }
         }

@@ -12,8 +12,7 @@ Backend de Versal - Plataforma de historias interactivas.
 
 ### Para Desarrolladores
 
-- **[docs/api/](docs/api/)** - Documentación de API (próximamente)
-- **[docs/guides/](docs/guides/)** - Guías técnicas (próximamente)
+- **[ENDPOINTS.md](docs/ENDPOINTS.md)** - Documentación completa de API ⭐
 
 ---
 
