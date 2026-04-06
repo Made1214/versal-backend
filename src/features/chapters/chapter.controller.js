@@ -1,9 +1,3 @@
-import fs from "fs";
-import util from "util";
-import path from "path";
-import { pipeline } from "stream";
-const pump = util.promisify(pipeline);
-
 import * as chapterService from "./chapter.service.js";
 
 // Controlador para crear un nuevo capítulo
@@ -69,13 +63,14 @@ async function deleteChapter(request, reply) {
 
 async function uploadChapterImage(request, reply) {
   const file = await request.file();
-  const result = await chapterService.uploadChapterImage(file, request);
+  const result = await chapterService.uploadChapterImage(file);
   return reply.send(result);
 }
 
 async function getPublishedChapterCount(request, reply) {
   const { storyId } = request.params;
-  const publishedChapterCount = await chapterService.getPublishedChapterCount(storyId);
+  const publishedChapterCount =
+    await chapterService.getPublishedChapterCount(storyId);
   reply.send({ publishedChapterCount });
 }
 

@@ -1,5 +1,5 @@
 import * as userService from "./user.service.js";
-import { uploadAvatar } from "../../utils/fileUpload.js";
+import { deleteImage, uploadAvatar } from "../../utils/cloudinary.js";
 
 // Obtener usuario actual
 async function getCurrentUser(req, reply) {
@@ -29,12 +29,15 @@ async function getUserProfileById(req, reply) {
 // Actualizar usuario
 async function updateProfile(req, reply) {
   const data = {};
+  const user = await userService.getUserById({ userId: req.user.userId });
+  const previousProfileImagePublicId = user.profileImagePublicId;
 
   const parts = req.parts();
   for await (const part of parts) {
     if (part.file) {
-      const imageUrl = await uploadAvatar(part, req);
-      data.profileImage = imageUrl;
+      const uploadResult = await uploadAvatar(part);
+      data.profileImage = uploadResult.url;
+      data.profileImagePublicId = uploadResult.publicId;
     } else {
       data[part.fieldname] = part.value;
     }
@@ -44,6 +47,15 @@ async function updateProfile(req, reply) {
     userId: req.user.userId,
     data: data,
   });
+
+  // Eliminamos la imagen anterior solo después de persistir correctamente la nueva referencia.
+  if (
+    data.profileImagePublicId &&
+    previousProfileImagePublicId &&
+    previousProfileImagePublicId !== data.profileImagePublicId
+  ) {
+    await deleteImage(previousProfileImagePublicId, "image");
+  }
 
   reply.send(updatedUser);
 }
@@ -96,7 +108,9 @@ async function getFollowing(req, reply) {
 
 // Ver usuarios bloqueados
 async function getBlockedUsers(req, reply) {
-  const blockedUsers = await userService.getBlockedUsers({ userId: req.user.userId });
+  const blockedUsers = await userService.getBlockedUsers({
+    userId: req.user.userId,
+  });
   reply.send(blockedUsers);
 }
 

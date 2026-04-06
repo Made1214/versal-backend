@@ -84,6 +84,7 @@ model User {
   email               String             @unique
   password            String
   profileImage        String?
+  profileImagePublicId  String?
   role                UserRole           @default(USER)
   bio                 String?
   isDeleted           Boolean            @default(false)
@@ -165,6 +166,7 @@ model Story {
   title         String
   description   String?
   coverImage    String?
+  coverImagePublicId  String?
   author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
   category      Category?   @relation(fields: [categoryId], references: [id])
@@ -225,6 +227,7 @@ model ChapterMedia {
   chapterId String
   type      MediaType
   url       String
+  publicId  String?
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
