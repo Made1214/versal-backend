@@ -51,8 +51,9 @@ pnpm test
 ## 📊 Estado del Proyecto
 
 - ✅ **Fase 1**: 100% Completada
-- ✅ **Mejoras Adicionales**: 7 completadas
-- ⏳ **Fase 2**: Próxima
+- ✅ **Fase 2**: 100% Completada
+- ✅ **Fase 3.1 - 3.6**: Completadas
+- ⏳ **Fase 3.7**: En curso (Nice to Have)
 
 Ver [ESTADO.md](docs/ai/ESTADO.md) para detalles completos.
 
@@ -67,7 +68,7 @@ src/
   middlewares/     ← Middlewares reutilizables
   utils/           ← Utilidades (errors, validate)
   plugins/         ← Plugins de Fastify
-  __tests__/       ← Tests (83 tests pasando)
+  __tests__/       ← Tests (última corrida: 158 tests pasando)
 ```
 
 ---
@@ -77,12 +78,14 @@ src/
 ### Manejo de Errores
 
 Services lanzan errores (no retornan `{ error }`):
+
 ```javascript
 throw new ValidationError("Email is required");
 throw new NotFoundError("User not found");
 ```
 
 Controllers sin try/catch (error handler global captura todo):
+
 ```javascript
 async function getUser(request, reply) {
   const user = await userService.getUser(request.params.userId);
@@ -93,6 +96,7 @@ async function getUser(request, reply) {
 ### Logging
 
 Usar logger de Fastify (no console.log):
+
 ```javascript
 request.log.info("User created", { userId: user.id });
 ```
@@ -100,11 +104,9 @@ request.log.info("User created", { userId: user.id });
 ### Autenticación
 
 Usar middlewares reutilizables:
+
 ```javascript
-fastify.post("/profile", 
-  { preHandler: [fastify.authenticate] },
-  getProfile
-);
+fastify.post("/profile", { preHandler: [fastify.authenticate] }, getProfile);
 ```
 
 ---
@@ -112,6 +114,7 @@ fastify.post("/profile",
 ## 📖 Documentación Completa
 
 Para documentación detallada, ver:
+
 - **[docs/ai/QUICK_START.md](docs/ai/QUICK_START.md)** - Resumen rápido
 - **[docs/ai/ESTADO.md](docs/ai/ESTADO.md)** - Estado y tareas
 - **[docs/ai/Context.md](docs/ai/Context.md)** - Arquitectura y patrones
@@ -126,5 +129,5 @@ Para documentación detallada, ver:
 
 ---
 
-**Última actualización**: 31/03/2026  
-**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ⏳
+**Última actualización**: 07/04/2026  
+**Estado**: Fase 1 ✅ | Fase 2 ✅ | Fase 3.1-3.6 ✅ | Fase 3.7 ⏳

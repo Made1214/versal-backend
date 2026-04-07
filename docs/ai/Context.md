@@ -1,6 +1,6 @@
 # 📚 Contexto del Proyecto - Versal Backend
 
-> Última actualización: 31/03/2026  
+> Última actualización: 07/04/2026  
 > **Para estado de tareas y progreso, ver `docs/ai/ESTADO.md`**
 
 ---
@@ -8,6 +8,7 @@
 ## 0. Propósito
 
 Este documento es una guía de referencia arquitectónica para el backend. Contiene:
+
 - Stack objetivo y estado actual
 - Arquitectura y decisiones de diseño
 - Patrones y convenciones
@@ -35,7 +36,7 @@ Este documento es una guía de referencia arquitectónica para el backend. Conti
 - **Backend**: Node.js con Fastify + Prisma (PostgreSQL)
 - **DB**: PostgreSQL para todo (usuarios, historias, capítulos, etc.)
 - **Modelo de datos**: Modular con Prisma ORM
-- **Tests**: Vitest configurado, 83 tests pasando ✅
+- **Tests**: Vitest configurado. Última corrida: 158 tests pasando, 2 suites fallando por variables de entorno (`JWT_SECRET`, `DATABASE_URL`).
 - **Estructura**: Modular 1:1 (module por feature) - Bien organizado
 
 ---
@@ -120,6 +121,7 @@ src/
 ### Manejo de Errores
 
 **Clases de Error Disponibles** (`src/utils/errors.js`):
+
 - `AppError(message, statusCode)` - Base para todos los errores
 - `NotFoundError(message)` - 404
 - `ValidationError(message)` - 400
@@ -128,6 +130,7 @@ src/
 - `ConflictError(message)` - 409
 
 **Uso en Services**:
+
 ```javascript
 import { ValidationError, NotFoundError } from "../../utils/errors.js";
 
@@ -144,6 +147,7 @@ async function getStory(storyId) {
 ```
 
 **Controllers sin try/catch**:
+
 ```javascript
 async function getStory(request, reply) {
   const story = await storyService.getStory(request.params.storyId);
@@ -156,41 +160,49 @@ El error handler global (`src/middlewares/errorHandler.js`) captura todos los er
 ### Middlewares Reutilizables
 
 **Autenticación**:
+
 ```javascript
 // En routes
-fastify.post("/users/profile", 
+fastify.post(
+  "/users/profile",
   { preHandler: [fastify.authenticate] },
-  getProfile
+  getProfile,
 );
 ```
 
 **Ownership**:
+
 ```javascript
 // En routes
-fastify.delete("/stories/:storyId",
+fastify.delete(
+  "/stories/:storyId",
   { preHandler: [fastify.authenticate, fastify.isOwner] },
-  deleteStory
+  deleteStory,
 );
 ```
 
 **Admin**:
+
 ```javascript
 // En routes
-fastify.get("/admin/users",
+fastify.get(
+  "/admin/users",
   { preHandler: [fastify.authenticate, fastify.isAdmin] },
-  getAllUsers
+  getAllUsers,
 );
 ```
 
 ### Logging
 
 **En Controllers/Routes**:
+
 ```javascript
 request.log.info("User created", { userId: user.id });
 request.log.error("Error creating user", { error: err.message });
 ```
 
 **NO usar**:
+
 ```javascript
 console.log("..."); // ❌ Prohibido
 console.error("..."); // ❌ Prohibido
@@ -201,6 +213,7 @@ console.error("..."); // ❌ Prohibido
 ## 5. Paginación
 
 **Patrón en getAllStories**:
+
 ```javascript
 async function getAllStories(filters = {}, pagination = {}) {
   const { page = 1, limit = 20 } = pagination;
@@ -211,9 +224,9 @@ async function getAllStories(filters = {}, pagination = {}) {
       where: queryConditions,
       skip,
       take: limit,
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
     }),
-    prisma.story.count({ where: queryConditions })
+    prisma.story.count({ where: queryConditions }),
   ]);
 
   return {
@@ -222,8 +235,8 @@ async function getAllStories(filters = {}, pagination = {}) {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
-    }
+      totalPages: Math.ceil(total / limit),
+    },
   };
 }
 ```
@@ -233,11 +246,13 @@ async function getAllStories(filters = {}, pagination = {}) {
 ## 6. Rate Limiting
 
 **Global** (100 req/min):
+
 ```javascript
 // src/plugins/rateLimit.plugin.js
 ```
 
 **Para Auth** (5 intentos/15 min):
+
 ```javascript
 // src/plugins/authRateLimit.plugin.js
 // Registrado en src/features/auth/auth.routes.js
@@ -250,6 +265,7 @@ async function getAllStories(filters = {}, pagination = {}) {
 **Endpoint**: `GET /health`
 
 **Respuesta exitosa** (200):
+
 ```json
 {
   "status": "ok",
@@ -260,6 +276,7 @@ async function getAllStories(filters = {}, pagination = {}) {
 ```
 
 **Respuesta error** (503):
+
 ```json
 {
   "status": "error",
@@ -286,6 +303,7 @@ async function getAllStories(filters = {}, pagination = {}) {
 ## 9. Validación
 
 **Email**:
+
 ```javascript
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -293,16 +311,17 @@ function isValidEmail(email) {
 ```
 
 **Schemas JSON Schema** en cada módulo:
+
 ```javascript
 export const loginSchema = {
   body: {
-    type: 'object',
-    required: ['email', 'password'],
+    type: "object",
+    required: ["email", "password"],
     properties: {
-      email: { type: 'string', format: 'email' },
-      password: { type: 'string', minLength: 8 }
-    }
-  }
+      email: { type: "string", format: "email" },
+      password: { type: "string", minLength: 8 },
+    },
+  },
 };
 ```
 
@@ -311,12 +330,14 @@ export const loginSchema = {
 ## 10. Configuración
 
 **Variables de entorno requeridas**:
+
 - `JWT_SECRET` (mínimo 32 caracteres)
 - `DATABASE_URL` (PostgreSQL)
 - `PORT` (default: 3000)
 - `NODE_ENV` (development, production, test)
 
 **Variables opcionales**:
+
 - `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` (ambas o ninguna)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `CORS_ORIGINS` (default: localhost)
@@ -337,48 +358,27 @@ pnpm test:watch         # Tests en modo watch
 pnpm prisma migrate dev # Crear migración
 pnpm prisma studio     # Abrir Prisma Studio
 
-# Limpieza
-pnpm remove jsonwebtoken  # Eliminar dependencia no usada
+# Tests focalizados
+pnpm test src/__tests__/auth/auth.service.test.js
 ```
 
 ---
 
 ## 12. Próximos Pasos (Priorización)
 
-### 🔴 Fase 1 - Críticos (COMPLETADA ✅)
+### Estado de Fases
 
-- ✅ Error handler global + clases de error personalizadas
-- ✅ Validación de env vars al arrancar
-- ✅ Middlewares reutilizables (isAdmin, isOwner, isAuthenticated)
-- ✅ Mejoras de seguridad (CORS, helmet, rate limit)
-- ✅ Configuración centralizada
-- ✅ app.js actualizado
-- ✅ Todos los services migrados a Prisma + `throw`
-- ✅ Todos los controllers sin try/catch
-- ✅ Paginación en getAllStories
-- ✅ Rate limiting específico para auth
-- ✅ Health check endpoint
+- ✅ Fase 1, Fase 2, Fase 3.1, Fase 3.3, Fase 3.4, Fase 3.5 y Fase 3.6 completadas.
+- ⏳ Fase 3.7 en curso.
 
-### 🟡 Fase 2 - Importantes (SIGUIENTE)
+### Prioridad Actual (alineada con `ESTADO.md`)
 
-1. Ejecutar `pnpm remove jsonwebtoken`
-2. Eliminar `src/plugins/stripe.js` (vacío)
-3. Eliminar schemas no usados
-4. Migrar Auth a ESM (si aún no está)
-5. Separar story.model.js en 3 modelos
-6. Extraer lógica de upload a util reutilizable
-7. Transacciones de Prisma para operaciones críticas
-8. Limpieza de archivos huérfanos
-9. Schemas compartidos con `$ref`
-10. Auto-loader de rutas
-
-### 🟢 Fase 3 - Nice to Have (DESPUÉS)
-
-1. Repository pattern
-2. Tests unitarios y de integración completos
-3. Docker setup
-4. Inyección de dependencias
-5. Migrar followers/following a colección separada
+1. Transacciones de Prisma para operaciones críticas (donaciones y confirmación de pagos).
+2. Tests unitarios y de integración completos en capas service/integration.
+3. Docker setup completo para backend + PostgreSQL (actual compose es legacy de Mongo).
+4. Inyección de dependencias.
+5. Caching con Redis (opcional).
+6. GraphQL API (opcional).
 
 ---
 
@@ -391,4 +391,4 @@ pnpm remove jsonwebtoken  # Eliminar dependencia no usada
 ---
 
 **Para ver tareas pendientes y progreso, consultar `docs/ai/ESTADO.md`**  
-**Última actualización**: 31/03/2026
+**Última actualización**: 07/04/2026

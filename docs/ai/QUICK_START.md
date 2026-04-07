@@ -52,6 +52,7 @@ src/
 ### 1. Manejo de Errores
 
 **Services lanzan errores** (no retornan `{ error }`):
+
 ```javascript
 import { ValidationError, NotFoundError } from "../../utils/errors.js";
 
@@ -64,6 +65,7 @@ async function getUser(userId) {
 ```
 
 **Controllers sin try/catch** (error handler global captura todo):
+
 ```javascript
 async function getUser(request, reply) {
   const user = await userService.getUser(request.params.userId);
@@ -72,6 +74,7 @@ async function getUser(request, reply) {
 ```
 
 **Error handler global** (`src/middlewares/errorHandler.js`):
+
 - Captura todos los errores automáticamente
 - Formatea respuestas consistentes
 - Maneja errores de Prisma, JWT, validación, etc.
@@ -79,6 +82,7 @@ async function getUser(request, reply) {
 ### 2. Logging
 
 **Usar logger de Fastify** (no console.log):
+
 ```javascript
 // ✅ Correcto
 request.log.info("User created", { userId: user.id });
@@ -92,11 +96,13 @@ console.error("Error");
 ### 3. Autenticación
 
 **Middleware `isAuthenticated`**:
+
 ```javascript
 // En routes
-fastify.post("/users/profile", 
+fastify.post(
+  "/users/profile",
   { preHandler: [fastify.authenticate] },
-  getProfile
+  getProfile,
 );
 
 // En controller
@@ -109,16 +115,17 @@ async function getProfile(request, reply) {
 ### 4. Validación
 
 **Schemas JSON Schema** en `auth.schema.js`, `user.schema.js`, etc.:
+
 ```javascript
 export const loginSchema = {
   body: {
-    type: 'object',
-    required: ['email', 'password'],
+    type: "object",
+    required: ["email", "password"],
     properties: {
-      email: { type: 'string', format: 'email' },
-      password: { type: 'string', minLength: 8 }
-    }
-  }
+      email: { type: "string", format: "email" },
+      password: { type: "string", minLength: 8 },
+    },
+  },
 };
 ```
 
@@ -141,13 +148,13 @@ export const loginSchema = {
 - ✅ Validación de Stripe keys
 - ✅ Repository Pattern implementado (10 repositories)
 - ✅ Cloudinary integrado para uploads de imágenes
-- ✅ 95+ tests pasando
+- ✅ 158 tests pasando en la última corrida (con 2 suites fallando por variables de entorno)
 
 ### ⏳ Pendiente (Fase 3.7 - Nice to Have)
 
 - [ ] Transacciones de Prisma para operaciones críticas
-- [ ] Tests unitarios y de integración completos
-- [ ] Docker setup
+- [ ] Tests unitarios y de integración completos (service + integration)
+- [ ] Docker setup completo para backend + PostgreSQL
 - [ ] Inyección de dependencias
 - [ ] Caching con Redis (opcional)
 - [ ] GraphQL API (opcional)
@@ -157,6 +164,7 @@ export const loginSchema = {
 ## 📸 Uploads de Imágenes (Cloudinary)
 
 **Cómo funciona**:
+
 1. Cliente envía archivo en multipart/form-data
 2. Backend recibe con `req.parts()`
 3. Sube a Cloudinary (servicio externo)
@@ -164,8 +172,13 @@ export const loginSchema = {
 5. Se guarda URL en BD (no el archivo)
 
 **Funciones disponibles** en `src/utils/fileUpload.js`:
+
 ```javascript
-import { uploadAvatar, uploadCover, uploadChapterImage } from "../../utils/fileUpload.js";
+import {
+  uploadAvatar,
+  uploadCover,
+  uploadChapterImage,
+} from "../../utils/fileUpload.js";
 
 // En controller
 const avatarUrl = await uploadAvatar(file);
@@ -174,6 +187,7 @@ const chapterImageUrl = await uploadChapterImage(file);
 ```
 
 **Variables de entorno necesarias**:
+
 ```
 CLOUDINARY_CLOUD_NAME=di4qby2sl
 CLOUDINARY_API_KEY=tu_api_key
@@ -181,6 +195,7 @@ CLOUDINARY_API_SECRET=tu_api_secret
 ```
 
 **Beneficios**:
+
 - ✅ 25 GB/mes gratis
 - ✅ CDN global incluido
 - ✅ Transformaciones automáticas
@@ -199,8 +214,8 @@ pnpm test:watch         # Tests en modo watch
 pnpm prisma migrate dev # Crear migración
 pnpm prisma studio     # Abrir Prisma Studio
 
-# Limpieza
-pnpm remove jsonwebtoken  # Eliminar dependencia no usada
+# Tests focalizados
+pnpm test src/__tests__/auth/auth.service.test.js
 ```
 
 ---
@@ -248,9 +263,9 @@ pnpm remove jsonwebtoken  # Eliminar dependencia no usada
 
 ## 🎯 Próximos Pasos
 
-1. **Inmediato**: `pnpm remove jsonwebtoken`
-2. **Corto plazo**: Fase 2 (ESM, modelos separados, etc.)
-3. **Mediano plazo**: Tests completos, Docker setup
+1. **Inmediato**: Implementar transacciones de Prisma en donaciones y confirmación de pagos
+2. **Corto plazo**: Cerrar brechas de tests en `donations` y `transactions`
+3. **Mediano plazo**: Docker setup completo para backend + PostgreSQL
 
 ---
 
@@ -265,5 +280,5 @@ pnpm remove jsonwebtoken  # Eliminar dependencia no usada
 
 ---
 
-**Última actualización**: 31/03/2026  
-**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ✅ | Fase 3.1 ✅ | Fase 3.3 ✅ | Fase 3.4 ✅ | Fase 3.5 ✅ | Fase 3.6 ✅ | Fase 3.7 ⏳
+**Última actualización**: 07/04/2026  
+**Estado**: Fase 1 ✅ | Fase 2 ✅ | Fase 3.1-3.6 ✅ | Fase 3.7 ⏳

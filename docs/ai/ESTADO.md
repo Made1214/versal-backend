@@ -1,7 +1,7 @@
 # 📊 Estado del Proyecto - Versal Backend
 
-> Última actualización: 31/03/2026  
-> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Repository) - 100% Completada ✅ | Fase 3.5 (Followers) - 100% Completada ✅ | Fase 3.6 (Nice to Have) ⏳
+> Última actualización: 07/04/2026  
+> Estado General: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Repository) - 100% Completada ✅ | Fase 3.5 (Followers) - 100% Completada ✅ | Fase 3.6 (Cloudinary) - 100% Completada ✅ | Fase 3.7 (Nice to Have) ⏳
 
 ---
 
@@ -17,7 +17,7 @@
 8. [Fase 3.3 - Separación de Modelos (Completadas)](#fase-33---separación-de-modelos-completada-31032026)
 9. [Fase 3.4 - Repository Pattern (Completada)](#fase-34---repository-pattern-completada-31032026)
 10. [Fase 3.5 - Migración de Followers/Following (Completada)](#fase-35---migración-de-followersfollowing-completada-31032026)
-11. [Fase 3.6 - Nice to Have (Siguiente)](#fase-36---nice-to-have-siguiente)
+11. [Fase 3.7 - Nice to Have (Siguiente)](#fase-37---nice-to-have-siguiente)
 12. [Próximos Pasos](#próximos-pasos)
 
 ---
@@ -40,7 +40,7 @@
 - **Backend**: Node.js con Fastify + Prisma (PostgreSQL)
 - **DB**: PostgreSQL para todo (usuarios, historias, capítulos, etc.)
 - **Modelo de datos**: Modular con Prisma ORM
-- **Tests**: Vitest configurado, 83 tests pasando ✅
+- **Tests**: Vitest configurado. Última corrida (07/04/2026): 158 tests pasando, 2 suites fallando por variables de entorno faltantes (`JWT_SECRET`, `DATABASE_URL`).
 - **Estructura**: Modular 1:1 (module por feature) - Bien organizado
 
 ---
@@ -75,23 +75,26 @@ PostgreSQL (Base de datos)
 - ✅ Todos los services migrados a Prisma + `throw`
 - ✅ Todos los controllers sin try/catch
 - ✅ app.js actualizado
-- ✅ 83 tests pasando
+- ✅ Base de tests establecida (ver métricas actuales al final del documento)
 
 ---
 
 ## 🎯 Mejoras Adicionales Completadas (31/03/2026)
 
 ### ✅ 1. Validación de Email en Registro
+
 - ✅ Validar formato de email antes de registrar usuario
 - ✅ Lanza `ValidationError` si el email no es válido
 - ✅ Usa regex estándar: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
 
 ### ✅ 2. Validación de Stripe Keys
+
 - ✅ Validación condicional: si una key está presente, ambas deben estarlo
 - ✅ Lanza error al arrancar si la configuración es inconsistente
 - ✅ Permite que Stripe sea completamente opcional
 
 ### ✅ 3. Paginación en getAllStories
+
 - ✅ Acepta parámetros `page` (default: 1) y `limit` (default: 20)
 - ✅ Usa `skip` y `take` de Prisma
 - ✅ Ejecuta queries en paralelo con `Promise.all()`
@@ -99,12 +102,14 @@ PostgreSQL (Base de datos)
 - ✅ **Beneficio**: 50x más rápido, 100x menos memoria
 
 ### ✅ 4. Rate Limiting Específico para Auth
+
 - ✅ Límite de 5 intentos por 15 minutos (vs 100/min global)
 - ✅ Identificación por IP del cliente
 - ✅ Previene ataques de fuerza bruta
 - ✅ Retorna 429 Too Many Requests cuando se excede
 
 ### ✅ 5. Health Check Endpoint
+
 - ✅ Endpoint `GET /health` para monitoreo del servidor
 - ✅ Verifica conexión a BD con `prisma.$queryRaw`
 - ✅ Retorna status, timestamp, uptime, database status
@@ -112,10 +117,12 @@ PostgreSQL (Base de datos)
 - ✅ Compatible con load balancers, Docker, Kubernetes
 
 ### ✅ 6. Verificación de jsonwebtoken
+
 - ✅ Verificado: NO SE USA (se usa `@fastify/jwt` en su lugar)
-- ✅ Recomendación: Ejecutar `pnpm remove jsonwebtoken`
+- ✅ Acción ejecutada: `pnpm remove jsonwebtoken`
 
 ### ✅ 7. Eliminación de Mongoose
+
 - ✅ Ejecutado `pnpm remove mongoose`
 - ✅ Eliminado archivo `src/config/db.js`
 - ✅ Eliminado import de `connectDB` en `app.js`
@@ -125,16 +132,19 @@ PostgreSQL (Base de datos)
 ## ✅ Fase 2 - Importantes (Completadas 31/03/2026)
 
 ### ✅ 1. Ejecutar `pnpm remove jsonwebtoken`
+
 - **Antes**: Dependencia `jsonwebtoken` instalada pero no usada (se usa `@fastify/jwt`)
 - **Después**: Dependencia removida, `package.json` y `pnpm-lock.yaml` actualizados
 - **Beneficio**: Reduce tamaño de node_modules, elimina dependencia innecesaria
 
 ### ✅ 2. Eliminar `src/plugins/stripe.js`
+
 - **Antes**: Archivo vacío existía en `src/plugins/stripe.js`
 - **Después**: Archivo eliminado, carpeta limpia
 - **Beneficio**: Elimina archivos huérfanos, reduce confusión
 
 ### ✅ 3. Verificar Schemas No Usados
+
 - **Antes**: Potencial de schemas no utilizados en rutas
 - **Después**: Verificado que TODOS los schemas se usan:
   - ✅ `auth.schema.js` - 7 schemas usados en auth.routes.js
@@ -149,6 +159,7 @@ PostgreSQL (Base de datos)
 - **Beneficio**: Confirmación de que no hay código muerto
 
 ### ✅ 4. Migrar Auth a ESM
+
 - **Antes**: Verificación necesaria si Auth estaba en CommonJS
 - **Después**: Confirmado que Auth ya está 100% en ESM:
   - ✅ `auth.controller.js` - import/export
@@ -158,6 +169,7 @@ PostgreSQL (Base de datos)
 - **Beneficio**: Consistencia con resto del proyecto
 
 ### ✅ 5. Limpieza de Archivos Huérfanos
+
 - **Antes**: Carpeta `src/config/config/` contenía 5 archivos duplicados:
   - `src/config/config/db.js` (no usado)
   - `src/config/config/index.js` (no usado)
@@ -169,24 +181,23 @@ PostgreSQL (Base de datos)
   - Verificado: 0 imports de `src/config/config/` en todo el proyecto
 - **Beneficio**: Elimina confusión, reduce clutter, estructura más clara
 
-## Fase 3 - Nice to Have (Siguiente)
+## Fase 3.7 - Nice to Have (Siguiente)
 
 ### ⏳ Tareas Pendientes
 
-1. [ ] Separar story.model.js en 3 modelos
-2. [ ] Extraer lógica de upload a util reutilizable
-3. [ ] Transacciones de Prisma para operaciones críticas
-4. [ ] Repository pattern
-5. [ ] Tests unitarios y de integración completos
-6. [ ] Docker setup
-7. [ ] Inyección de dependencias
-8. [ ] Migrar followers/following a colección separada
+1. [ ] Transacciones de Prisma para operaciones críticas
+2. [ ] Tests unitarios y de integración completos (especialmente `donations` y `transactions` en capa service/integration)
+3. [ ] Docker setup completo para backend + PostgreSQL (actualmente solo existe `docker-compose.yml` legacy para Mongo)
+4. [ ] Inyección de dependencias
+5. [ ] Caching con Redis (opcional)
+6. [ ] GraphQL API (opcional)
 
 ---
 
 ## ✅ Fase 3.1 - Optimizaciones de Código (Completadas 31/03/2026)
 
 ### ✅ 1. Schemas Compartidos con `$ref`
+
 - **Antes**: Schemas duplicados en múltiples módulos
   - `userBase` definido en `auth.schema.js` y `user.schema.js`
   - `storyProperties`, `categoryProperties`, `tagProperties` en `story.schema.js`
@@ -210,6 +221,7 @@ PostgreSQL (Base de datos)
   - ✅ Menos código duplicado - ~200 líneas eliminadas
 
 ### ✅ 2. Auto-loader de Rutas
+
 - **Antes**: Rutas registradas manualmente en `app.js`
   - 9 imports de rutas
   - 9 registros manuales con `fastify.register()`
@@ -237,6 +249,7 @@ PostgreSQL (Base de datos)
 ## ✅ Fase 3.3 - Separación de Modelos (Completada 31/03/2026)
 
 ### ✅ 1. Separar story.model.js en 3 Repositorios
+
 - **Antes**: Archivo monolítico `src/models/story.model.js` con:
   - Mongoose schemas (legacy, no usado)
   - 3 modelos mezclados: Story, Category, Tag
@@ -265,6 +278,7 @@ PostgreSQL (Base de datos)
 ## ✅ Fase 3.4 - Repository Pattern (Completada 31/03/2026)
 
 ### ✅ 1. Migración Completa al Patrón Repository
+
 - **Antes**: Services accedían directamente a Prisma
 - **Después**: Capa de repositories centralizada
   - ✅ `src/repositories/story.repository.js` - Story, Category, Tag
@@ -300,25 +314,21 @@ PostgreSQL (Base de datos)
   - ✅ Profesional - Estándar en proyectos de nivel alto
 
 ### ✅ 2. Tests Actualizados para Repository Pattern
+
 - **Antes**: Tests importaban desde `../../models/`
 - **Después**: Tests importaban desde `../../repositories/`
   - ✅ Todos los imports actualizados
   - ✅ Mocks configurados correctamente
-  - ✅ 95+ tests pasando
-  - ✅ Story service tests: 17/17 ✅
-  - ✅ Interaction service tests: 12/13 ✅
-  - ✅ Favorites service tests: 10/10 ✅
-  - ✅ Donations service tests: 8/8 ✅
-  - ✅ Auth integration tests: 4/4 ✅
-  - ✅ Users service tests: 10/10 ✅
-  - ✅ Chapters service tests: 7/7 ✅
-  - ✅ Reports service tests: 10/11 ✅
+  - ✅ Suite de tests adaptada al patrón repository
+  - ✅ Cobertura activa en repositorios y servicios clave
+  - ⚠️ Los conteos exactos cambian con la evolución de la suite (ver métricas actuales)
 
 ---
 
 ## ✅ Fase 3.5 - Migración de Followers/Following (Completada 31/03/2026)
 
 ### ✅ 1. Estructura Actual de Followers/Following
+
 - **Antes**: Relación directa en tabla `Follow`
   - Tabla: `Follow(followerId, followeeId)`
   - Métodos en `user.repository.js`:
@@ -335,7 +345,7 @@ PostgreSQL (Base de datos)
   - ✅ Queries con `select` para traer solo datos necesarios
   - ✅ Estructura ya es profesional y escalable
 
-- **Conclusión**: 
+- **Conclusión**:
   - ✅ Ya está implementado correctamente
   - ✅ No requiere cambios
   - ✅ Sigue mejores prácticas
@@ -345,6 +355,7 @@ PostgreSQL (Base de datos)
 ## ✅ Fase 3.6 - Upload a Cloudinary (Completada 31/03/2026)
 
 ### ✅ 1. Integración de Cloudinary para Almacenamiento de Imágenes
+
 - **Antes**: Imágenes se guardaban en disco local (`uploads/avatars`, `uploads/covers`, `uploads/chapters`)
   - ❌ Consume espacio en servidor
   - ❌ No escala en producción (múltiples servidores)
@@ -384,8 +395,8 @@ PostgreSQL (Base de datos)
 ### ⏳ Tareas Pendientes (Fase 3.7)
 
 1. [ ] Transacciones de Prisma para operaciones críticas
-2. [ ] Tests unitarios y de integración completos (repository tests)
-3. [ ] Docker setup
+2. [ ] Tests unitarios y de integración completos (service + integration)
+3. [ ] Docker setup completo para backend + PostgreSQL
 4. [ ] Inyección de dependencias
 5. [ ] Caching con Redis (opcional)
 6. [ ] GraphQL API (opcional)
@@ -395,19 +406,21 @@ PostgreSQL (Base de datos)
 ## Próximos Pasos
 
 ### ✅ Completado (Hoy)
+
 ✅ Fase 1 completada - Todos los servicios migrados a Prisma + throw pattern  
 ✅ Mejoras adicionales completadas (7 mejoras)  
 ✅ Fase 2 completada - Limpieza y optimización  
 ✅ Fase 3.1 completada - Schemas compartidos + Auto-loader de rutas  
-✅ Fase 3.3 completada - Separación de story.model.js en 3 repositorios + 83+ tests  
-✅ Fase 3.4 completada - Repository pattern para todos los modelos + 95+ tests  
+✅ Fase 3.3 completada - Separación de story.model.js en 3 repositorios  
+✅ Fase 3.4 completada - Repository pattern para todos los modelos  
 ✅ Fase 3.5 completada - Followers/Following ya está optimizado  
 ✅ Fase 3.6 completada - Integración de Cloudinary para uploads
 
 ### Próxima Fase (Fase 3.7 - Nice to Have)
+
 1. Transacciones de Prisma para operaciones críticas
-2. Tests unitarios y de integración completos (repository tests)
-3. Docker setup
+2. Tests unitarios y de integración completos (service + integration)
+3. Docker setup completo para backend + PostgreSQL
 4. Inyección de dependencias
 5. Caching con Redis (opcional)
 6. GraphQL API (opcional)
@@ -417,6 +430,7 @@ PostgreSQL (Base de datos)
 ## 📊 Métricas del Proyecto
 
 ### Archivos Migrados a Prisma + ESM:
+
 - ✅ 9/9 servicios (100%)
 - ✅ 9/9 controllers (100%)
 - ✅ 9/9 rutas (100%)
@@ -428,16 +442,18 @@ PostgreSQL (Base de datos)
 - ✅ 10/10 repositories (100%)
 
 ### Calidad de Código:
-- ✅ 0 `console.log` en producción
+
+- ⚠️ Quedan usos de `console.*` por migrar a logger (`src/config/prisma.js`, `src/features/auth/auth.service.js`, `src/features/transactions/transaction.service.js`, `src/repositories/category.repository.js`, `src/repositories/tag.repository.js`)
 - ✅ 0 `try/catch` en controllers
 - ✅ 0 `return { error }` en services
 - ✅ 100% uso de clases de error personalizadas
 - ✅ 100% uso de error handler global
-- ✅ 95+ tests pasando (0 fallando en services)
+- ⚠️ Última corrida de tests: 158 tests pasando, 2 suites fallando por configuración de entorno
 - ✅ 100% Repository Pattern implementado
 - ✅ 0 acceso directo a Prisma desde services
 
 ### Arquitectura:
+
 - ✅ Patrón Repository Pattern - Implementado
 - ✅ Separación de responsabilidades - Completa
 - ✅ Código modular - 1:1 module por feature
@@ -448,5 +464,5 @@ PostgreSQL (Base de datos)
 ---
 
 **Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Repository) - 100% Completada ✅ | Fase 3.5 (Followers) - 100% Completada ✅ | Fase 3.6 (Cloudinary) - 100% Completada ✅ | Fase 3.7 (Nice to Have) ⏳  
-**Próximo paso**: Comenzar Fase 3.7 (Transacciones de Prisma, tests completos, Docker, etc.)  
-**Última actualización**: 31/03/2026
+**Próximo paso recomendado**: Implementar transacciones de Prisma en operaciones críticas de dinero (donaciones y confirmación de pagos) y luego cerrar brechas de tests de integración.  
+**Última actualización**: 07/04/2026
