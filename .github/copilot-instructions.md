@@ -23,6 +23,7 @@ Use these rules for all tasks in this workspace.
 - Controllers should not wrap business logic in try/catch (global error handler).
 - Prefer Fastify logger over console.\* in application code.
 - Keep feature structure aligned: controller + service + routes + schema.
+- For Fastify backend work, prioritize the installed skill guidance in .agents/skills/fastify-best-practices/SKILL.md and its rules/\*.md as default implementation criteria.
 
 ## Validation and Testing
 

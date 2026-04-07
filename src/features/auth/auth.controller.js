@@ -1,5 +1,6 @@
 import * as authService from "./auth.service.js";
 import * as userService from "../users/user.service.js";
+import { UnauthorizedError } from "../../utils/errors.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -113,12 +114,22 @@ async function oauthGoogleCallback(request, reply) {
 async function refreshToken(request, reply) {
   const token = request.cookies[REFRESH_TOKEN_COOKIE_NAME];
   if (!token) {
-    throw new Error("No refresh token provided.");
+    throw new UnauthorizedError("No refresh token provided.");
   }
 
   await authService.verifyRefreshToken(token);
 
-  const decoded = await request.jwtVerify({ token });
+  let decoded;
+  try {
+    decoded = request.server.jwt.verify(token);
+  } catch {
+    throw new UnauthorizedError("Refresh token inválido o expirado.");
+  }
+
+  if (!decoded?.userId || !decoded?.role) {
+    throw new UnauthorizedError("Refresh token inválido.");
+  }
+
   const payload = { userId: decoded.userId, role: decoded.role };
   const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
 

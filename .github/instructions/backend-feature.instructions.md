@@ -12,6 +12,7 @@ applyTo:
 
 # Backend Feature Rules
 
+- Use fastify-best-practices as default guidance for Fastify decisions in this scope. Reference .agents/skills/fastify-best-practices/SKILL.md and relevant rules/\*.md before editing behavior.
 - Keep service layer as business logic source of truth.
 - Throw ValidationError, NotFoundError, ForbiddenError, etc. from src/utils/errors.js.
 - Controllers should stay thin: parse request, call service, send response.

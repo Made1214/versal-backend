@@ -18,7 +18,8 @@
 9. [Fase 3.4 - Repository Pattern (Completada)](#fase-34---repository-pattern-completada-31032026)
 10. [Fase 3.5 - Migración de Followers/Following (Completada)](#fase-35---migración-de-followersfollowing-completada-31032026)
 11. [Fase 3.7 - Nice to Have (Siguiente)](#fase-37---nice-to-have-siguiente)
-12. [Próximos Pasos](#próximos-pasos)
+12. [Fase 3.8 - Hardening Fastify (Pendiente)](#fase-38---hardening-fastify-pendiente-07042026)
+13. [Próximos Pasos](#próximos-pasos)
 
 ---
 
@@ -400,6 +401,100 @@ PostgreSQL (Base de datos)
 4. [ ] Inyección de dependencias
 5. [ ] Caching con Redis (opcional)
 6. [ ] GraphQL API (opcional)
+
+---
+
+## ⏳ Fase 3.8 - Hardening Fastify (Pendiente 07/04/2026)
+
+Objetivo: cerrar brechas detectadas en revisión con enfoque fastify-best-practices (schema-first, plugins consistentes, errores tipados y seguridad operativa).
+
+### Backlog Priorizado
+
+#### P0 - Crítico
+
+1. [x] Registrar plugin de cookies en bootstrap para soportar refresh token vía cookie
+   - Archivo principal: `app.js`
+   - Riesgo actual: auth puede fallar en runtime por falta de `request.cookies`/`setCookie`.
+   - Criterio de aceptación:
+     - `@fastify/cookie` registrado antes de usar rutas de auth.
+     - Flujo login/refresh/logout funcional con cookies.
+
+- Estado: ✅ Completado (07/04/2026)
+
+2. [x] Corregir validación de refresh token para no depender de verificación ambigua
+   - Archivo principal: `src/features/auth/auth.controller.js`
+   - Riesgo actual: rechazo de tokens válidos o validación inconsistente.
+   - Criterio de aceptación:
+     - Verificación explícita y consistente del refresh token.
+     - Errores tipados (`UnauthorizedError`) en faltantes/inválidos.
+
+- Estado: ✅ Completado (07/04/2026)
+
+3. [x] Hacer Stripe realmente opcional (evitar throw en import time)
+   - Archivo principal: `src/features/transactions/transaction.controller.js`
+   - Riesgo actual: caída total del servidor si faltan variables Stripe aunque no se use la feature.
+   - Criterio de aceptación:
+     - Arranque del servidor sin Stripe configurado.
+     - Endpoints Stripe retornan error operacional claro cuando aplique.
+
+- Estado: ✅ Completado (07/04/2026)
+
+#### P1 - Alto
+
+4. [ ] Completar cobertura schema-first en rutas privadas y públicas sin schema
+   - Archivos foco:
+     - `src/features/favorites/favorite.routes.js`
+     - `src/features/interactions/interaction.routes.js`
+     - `src/features/users/user.routes.js`
+     - `src/features/stories/story.routes.js`
+     - `src/features/transactions/transaction.routes.js`
+   - Riesgo actual: menor validación de inputs/outputs y contratos débiles.
+   - Criterio de aceptación:
+     - Todas las rutas tienen al menos `params/body/querystring/response` según corresponda.
+     - Respuestas con forma estable y validada por Fastify.
+
+5. [ ] Unificar autorización admin con middleware reutilizable
+   - Archivos foco:
+     - `src/features/users/user.routes.js`
+     - `src/middlewares/isAdmin.js`
+   - Riesgo actual: duplicación de política de seguridad.
+   - Criterio de aceptación:
+     - Rutas admin usan middleware centralizado.
+     - Error de autorización consistente con el resto del sistema.
+
+#### P2 - Medio
+
+6. [ ] Eliminar usos restantes de `throw new Error` y `console.log` en auth/transacciones
+   - Archivos foco:
+     - `src/features/auth/auth.controller.js`
+     - `src/features/auth/auth.service.js`
+   - Riesgo actual: inconsistencias con patrón de errores tipados y observabilidad.
+   - Criterio de aceptación:
+     - Uso de clases de `src/utils/errors.js`.
+     - Logging por `request.log` o `fastify.log`.
+
+### Orden de Ejecución Recomendado
+
+1. P0.1 cookies bootstrap
+2. P0.2 refresh token
+3. P0.3 Stripe opcional
+4. P1.4 schema-first por feature
+5. P1.5 middleware admin
+6. P2.6 limpieza final de errores/logs
+
+### Validación por Fase
+
+- Para cada punto cerrado:
+  - [ ] tests de feature afectados
+  - [ ] smoke test manual de endpoints sensibles
+  - [ ] actualización de `docs/ENDPOINTS.md` si hay cambio de contrato
+
+### Estado de la Fase
+
+- Estado: ⏳ Pendiente
+- Owner: Backend
+- Fecha de alta: 07/04/2026
+- Fecha objetivo: por definir
 
 ---
 

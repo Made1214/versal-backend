@@ -1,35 +1,35 @@
 // Versal/backend/app.js
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import fastifyLib from 'fastify';
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import fastifyLib from "fastify";
 
 const fastify = fastifyLib({ logger: true });
 
 // Configuración centralizada (valida env vars al cargar)
-import config from './src/config/index.js';
+import config from "./src/config/index.js";
 
 // Importar Prisma
-import prisma from './src/config/prisma.js';
+import prisma from "./src/config/prisma.js";
 
 // Importar componentes de infraestructura
-import errorHandler from './src/middlewares/errorHandler.js';
-import corsPlugin from './src/plugins/cors.plugin.js';
-import helmetPlugin from './src/plugins/helmet.plugin.js';
-import rateLimitPlugin from './src/plugins/rateLimit.plugin.js';
-import authPlugin from './src/plugins/auth.plugin.js';
+import errorHandler from "./src/middlewares/errorHandler.js";
+import corsPlugin from "./src/plugins/cors.plugin.js";
+import helmetPlugin from "./src/plugins/helmet.plugin.js";
+import rateLimitPlugin from "./src/plugins/rateLimit.plugin.js";
+import authPlugin from "./src/plugins/auth.plugin.js";
 
 // Importar plugins de Fastify
-import jwt from '@fastify/jwt';
-import fastifyMultipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
-import fastifyRawBody from 'fastify-raw-body';
-import fastifyOAuth2 from '@fastify/oauth2';
+import jwt from "@fastify/jwt";
+import fastifyCookie from "@fastify/cookie";
+import fastifyMultipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
+import fastifyRawBody from "fastify-raw-body";
+import fastifyOAuth2 from "@fastify/oauth2";
 
 // ESM equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 
 // ============================================
 // REGISTRAR PLUGINS DE SEGURIDAD Y UTILIDAD
@@ -43,32 +43,35 @@ fastify.register(corsPlugin);
 fastify.register(helmetPlugin);
 fastify.register(rateLimitPlugin);
 
+// Cookies (requerido para refresh token en auth)
+fastify.register(fastifyCookie);
+
 // JWT
-fastify.register(jwt, { 
+fastify.register(jwt, {
   secret: config.JWT_SECRET,
-  sign: { expiresIn: config.JWT_EXPIRES_IN }
+  sign: { expiresIn: config.JWT_EXPIRES_IN },
 });
 
 // Auth plugin (usa JWT)
 fastify.register(authPlugin);
 
-// Google OAuth2 
+// Google OAuth2
 fastify.register(fastifyOAuth2, {
-  name: 'googleOAuth2',
-  scope: ['openid', 'email', 'profile'],
+  name: "googleOAuth2",
+  scope: ["openid", "email", "profile"],
   credentials: {
     client: {
       id: config.GOOGLE_CLIENT_ID,
-      secret: config.GOOGLE_CLIENT_SECRET
+      secret: config.GOOGLE_CLIENT_SECRET,
     },
     auth: {
-      authorizeHost: 'https://accounts.google.com',
-      authorizePath: '/o/oauth2/v2/auth',
-      tokenHost: 'https://oauth2.googleapis.com',
-      tokenPath: '/token'
-    }
+      authorizeHost: "https://accounts.google.com",
+      authorizePath: "/o/oauth2/v2/auth",
+      tokenHost: "https://oauth2.googleapis.com",
+      tokenPath: "/token",
+    },
   },
-  startRedirectPath: '/api/auth/oauth/google',
+  startRedirectPath: "/api/auth/oauth/google",
   callbackUri: config.GOOGLE_OAUTH_CALLBACK_URL,
 });
 
@@ -77,15 +80,15 @@ fastify.register(fastifyMultipart);
 
 // Static files
 fastify.register(fastifyStatic, {
-  root: path.join(__dirname, 'uploads'),
-  prefix: '/uploads/'
+  root: path.join(__dirname, "uploads"),
+  prefix: "/uploads/",
 });
 
 // Raw body (para webhooks de Stripe)
 fastify.register(fastifyRawBody, {
-  field: 'rawBody',
+  field: "rawBody",
   global: false,
-  encoding: 'utf8'
+  encoding: "utf8",
 });
 
 // ============================================
@@ -93,48 +96,48 @@ fastify.register(fastifyRawBody, {
 // ============================================
 
 // Health check endpoint
-fastify.get('/health', async (request, reply) => {
+fastify.get("/health", async (request, reply) => {
   try {
     // Verificar conexión a BD
     await prisma.$queryRaw`SELECT 1`;
-    
+
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: 'connected'
+      database: "connected",
     };
   } catch (error) {
     reply.code(503);
     return {
-      status: 'error',
+      status: "error",
       timestamp: new Date().toISOString(),
-      database: 'disconnected',
-      error: error.message
+      database: "disconnected",
+      error: error.message,
     };
   }
 });
 
 // Importar y registrar rutas manualmente
-import authRoutes from './src/features/auth/auth.routes.js';
-import storyRoutes from './src/features/stories/story.routes.js';
-import chapterRoutes from './src/features/chapters/chapter.routes.js';
-import userRoutes from './src/features/users/user.routes.js';
-import favoriteRoutes from './src/features/favorites/favorite.routes.js';
-import interactionRoutes from './src/features/interactions/interaction.routes.js';
-import reportRoutes from './src/features/reports/report.routes.js';
-import transactionRoutes from './src/features/transactions/transaction.routes.js';
-import donationRoutes from './src/features/donations/donation.routes.js';
+import authRoutes from "./src/features/auth/auth.routes.js";
+import storyRoutes from "./src/features/stories/story.routes.js";
+import chapterRoutes from "./src/features/chapters/chapter.routes.js";
+import userRoutes from "./src/features/users/user.routes.js";
+import favoriteRoutes from "./src/features/favorites/favorite.routes.js";
+import interactionRoutes from "./src/features/interactions/interaction.routes.js";
+import reportRoutes from "./src/features/reports/report.routes.js";
+import transactionRoutes from "./src/features/transactions/transaction.routes.js";
+import donationRoutes from "./src/features/donations/donation.routes.js";
 
-fastify.register(authRoutes, { prefix: '/api' });
-fastify.register(storyRoutes, { prefix: '/api/stories' });
-fastify.register(chapterRoutes, { prefix: '/api' });
-fastify.register(userRoutes, { prefix: '/api/users' });
-fastify.register(favoriteRoutes, { prefix: '/api/favorites' });
-fastify.register(interactionRoutes, { prefix: '/api' });
-fastify.register(reportRoutes, { prefix: '/api/reports' });
-fastify.register(transactionRoutes, { prefix: '/api' });
-fastify.register(donationRoutes, { prefix: '/api/donations' });
+fastify.register(authRoutes, { prefix: "/api" });
+fastify.register(storyRoutes, { prefix: "/api/stories" });
+fastify.register(chapterRoutes, { prefix: "/api" });
+fastify.register(userRoutes, { prefix: "/api/users" });
+fastify.register(favoriteRoutes, { prefix: "/api/favorites" });
+fastify.register(interactionRoutes, { prefix: "/api" });
+fastify.register(reportRoutes, { prefix: "/api/reports" });
+fastify.register(transactionRoutes, { prefix: "/api" });
+fastify.register(donationRoutes, { prefix: "/api/donations" });
 
 // ============================================
 // INICIAR SERVIDOR
@@ -156,14 +159,14 @@ const start = async () => {
 };
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  fastify.log.info('SIGTERM recibido, cerrando servidor...');
+process.on("SIGTERM", async () => {
+  fastify.log.info("SIGTERM recibido, cerrando servidor...");
   await fastify.close();
   process.exit(0);
 });
 
-process.on('SIGINT', async () => {
-  fastify.log.info('SIGINT recibido, cerrando servidor...');
+process.on("SIGINT", async () => {
+  fastify.log.info("SIGINT recibido, cerrando servidor...");
   await fastify.close();
   process.exit(0);
 });
