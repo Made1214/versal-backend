@@ -2,11 +2,11 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import * as userService from "../users/user.service.js";
 import * as authRepo from "../../repositories/auth.repository.js";
-import { 
-  NotFoundError, 
-  ValidationError, 
+import {
+  NotFoundError,
+  ValidationError,
   UnauthorizedError,
-  ConflictError 
+  ConflictError,
 } from "../../utils/errors.js";
 
 // Registra usuario usando userService.
@@ -17,7 +17,7 @@ async function registerUser({ email, password, username, fullName }) {
   if (existing) {
     if (existing.isDeleted) {
       throw new ConflictError(
-        "El email ya estaba asociado a una cuenta eliminada. Ponte en contacto con soporte si quieres recuperarla."
+        "El email ya estaba asociado a una cuenta eliminada. Ponte en contacto con soporte si quieres recuperarla.",
       );
     }
     throw new ConflictError("El email ya está en uso.");
@@ -87,7 +87,8 @@ async function verifyRefreshToken(token) {
   const tokenHash = hashToken(token);
   const refreshToken = await authRepo.findRefreshTokenByHash(tokenHash);
   if (!refreshToken) throw new UnauthorizedError("Refresh token inválido.");
-  if (refreshToken.revoked) throw new UnauthorizedError("Refresh token revocado.");
+  if (refreshToken.revoked)
+    throw new UnauthorizedError("Refresh token revocado.");
   if (refreshToken.expiresAt < new Date())
     throw new UnauthorizedError("Refresh token expirado.");
 
@@ -128,7 +129,6 @@ async function requestPasswordReset({ email }) {
   });
 
   // TODO: enviar email real; por ahora devolvemos token para testing.
-  console.log(`Password reset token for ${email}: ${token}`);
 
   return {
     message: "Reset password token generated. Revisa tu email.",
@@ -158,7 +158,7 @@ async function resetPassword({ email, token, newPassword }) {
 
   if (!isValidPassword(newPassword)) {
     throw new ValidationError(
-      "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un carácter especial."
+      "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un carácter especial.",
     );
   }
 

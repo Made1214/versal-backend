@@ -54,7 +54,16 @@ async function storyRoutes(fastify) {
     privateRoutes.addHook("onRequest", fastify.authenticate);
 
     // Crear una nueva historia
-    privateRoutes.post("/", storyController.createStory);
+    privateRoutes.post(
+      "/",
+      {
+        schema: {
+          headers: createStorySchema.headers,
+          response: createStorySchema.response,
+        },
+      },
+      storyController.createStory,
+    );
 
     // Obtener historias del autor autenticado
     privateRoutes.get(
@@ -64,7 +73,17 @@ async function storyRoutes(fastify) {
     );
 
     // Actualizar una historia existente
-    privateRoutes.patch("/:id", storyController.updateStory);
+    privateRoutes.patch(
+      "/:id",
+      {
+        schema: {
+          headers: updateStorySchema.headers,
+          params: updateStorySchema.params,
+          response: updateStorySchema.response,
+        },
+      },
+      storyController.updateStory,
+    );
 
     // Eliminar una historia
     privateRoutes.delete(

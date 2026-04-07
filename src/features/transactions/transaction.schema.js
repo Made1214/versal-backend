@@ -9,10 +9,16 @@ const headersAuth = {
 const transactionProperties = {
   _id: { type: "string" },
   userId: { type: "string" },
-  type: { type: "string", enum: ["subscription", "coin_pack_purchase", "donation"] },
+  type: {
+    type: "string",
+    enum: ["subscription", "coin_pack_purchase", "donation"],
+  },
   amount: { type: "number" },
   currency: { type: "string" },
-  status: { type: "string", enum: ["pending", "completed", "failed", "canceled"] },
+  status: {
+    type: "string",
+    enum: ["pending", "completed", "failed", "canceled"],
+  },
   paymentMethod: { type: "string" },
   stripeCheckoutSessionId: { type: "string", nullable: true },
   stripePaymentIntentId: { type: "string", nullable: true },
@@ -40,22 +46,33 @@ const packProperties = {
 
 const createSubscriptionCheckoutSchema = {
   summary: "Iniciar checkout para una suscripción",
-  description: "Crea una sesión de checkout de Stripe para una nueva suscripción.",
+  description:
+    "Crea una sesión de checkout de Stripe para una nueva suscripción.",
   tags: ["Transactions"],
   headers: headersAuth,
   body: {
     type: "object",
-    required: ["planId"], 
+    required: ["planId"],
     properties: {
-      planId: { type: "string", description: "ID del precio del plan de suscripción en Stripe" },
+      planId: {
+        type: "string",
+        description: "ID del precio del plan de suscripción en Stripe",
+      },
     },
   },
   response: {
     200: {
       type: "object",
       properties: {
-        sessionId: { type: "string", description: "ID de la sesión de checkout de Stripe" },
-        url: { type: "string", format: "uri", description: "URL de redirección a Stripe Checkout" },
+        sessionId: {
+          type: "string",
+          description: "ID de la sesión de checkout de Stripe",
+        },
+        url: {
+          type: "string",
+          format: "uri",
+          description: "URL de redirección a Stripe Checkout",
+        },
       },
     },
     400: {
@@ -75,22 +92,33 @@ const createSubscriptionCheckoutSchema = {
 
 const createCoinPackCheckoutSchema = {
   summary: "Iniciar checkout para un pack de monedas",
-  description: "Crea una sesión de checkout de Stripe para la compra de un pack de monedas.",
+  description:
+    "Crea una sesión de checkout de Stripe para la compra de un pack de monedas.",
   tags: ["Transactions"],
   headers: headersAuth,
   body: {
     type: "object",
     required: ["coinPackId"],
     properties: {
-      coinPackId: { type: "string", description: "ID del precio del pack de monedas en Stripe" },
+      coinPackId: {
+        type: "string",
+        description: "ID del precio del pack de monedas en Stripe",
+      },
     },
   },
   response: {
     200: {
       type: "object",
       properties: {
-        sessionId: { type: "string", description: "ID de la sesión de checkout de Stripe" },
-        url: { type: "string", format: "uri", description: "URL de redirección a Stripe Checkout" },
+        sessionId: {
+          type: "string",
+          description: "ID de la sesión de checkout de Stripe",
+        },
+        url: {
+          type: "string",
+          format: "uri",
+          description: "URL de redirección a Stripe Checkout",
+        },
       },
     },
     400: {
@@ -110,13 +138,15 @@ const createCoinPackCheckoutSchema = {
 
 const stripeWebhookSchema = {
   summary: "Webhook de Stripe",
-  description: "Endpoint para que Stripe envíe eventos de notificaciones de pago.",
+  description:
+    "Endpoint para que Stripe envíe eventos de notificaciones de pago.",
   tags: ["Webhooks"],
 };
 
 const getUserTransactionsSchema = {
   summary: "Obtener historial de transacciones del usuario",
-  description: "Devuelve una lista de todas las transacciones asociadas al usuario autenticado.",
+  description:
+    "Devuelve una lista de todas las transacciones asociadas al usuario autenticado.",
   tags: ["Transactions"],
   headers: headersAuth,
   response: {
@@ -145,7 +175,8 @@ const getUserTransactionsSchema = {
 
 const getSubscriptionPlansSchema = {
   summary: "Obtener planes de suscripción",
-  description: "Devuelve una lista de todos los planes de suscripción disponibles para la compra.",
+  description:
+    "Devuelve una lista de todos los planes de suscripción disponibles para la compra.",
   tags: ["Products"],
   response: {
     200: {
@@ -163,7 +194,8 @@ const getSubscriptionPlansSchema = {
 
 const getCoinPacksSchema = {
   summary: "Obtener paquetes de monedas",
-  description: "Devuelve una lista de todos los paquetes de monedas disponibles para la compra.",
+  description:
+    "Devuelve una lista de todos los paquetes de monedas disponibles para la compra.",
   tags: ["Products"],
   response: {
     200: {
@@ -179,6 +211,24 @@ const getCoinPacksSchema = {
   },
 };
 
+const getStripeBalanceSchema = {
+  summary: "Obtener balance de Stripe",
+  description: "Devuelve el balance de la cuenta Stripe configurada.",
+  tags: ["Transactions"],
+  headers: headersAuth,
+  response: {
+    200: {
+      type: "object",
+      properties: {
+        balance: {
+          type: "object",
+          additionalProperties: true,
+        },
+      },
+    },
+  },
+};
+
 export {
   createSubscriptionCheckoutSchema,
   createCoinPackCheckoutSchema,
@@ -187,4 +237,5 @@ export {
   getUserTransactionsSchema,
   getSubscriptionPlansSchema,
   getCoinPacksSchema,
+  getStripeBalanceSchema,
 };

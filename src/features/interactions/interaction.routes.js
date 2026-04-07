@@ -10,14 +10,26 @@ async function interactionRoutes(fastify) {
     privateRoutes.addHook("onRequest", fastify.authenticate);
 
     // Añadir una interacción (like/comentario) a un capítulo
-    privateRoutes.post("/chapters/:id/interactions", interactionController.addInteractionToChapter);
+    privateRoutes.post(
+      "/chapters/:id/interactions",
+      { schema: addInteractionSchema },
+      interactionController.addInteractionToChapter,
+    );
 
     // Eliminar cualquier interacción por su ID
-    privateRoutes.delete("/:interactionId", interactionController.deleteInteraction);
+    privateRoutes.delete(
+      "/:interactionId",
+      { schema: deleteInteractionSchema },
+      interactionController.deleteInteraction,
+    );
   });
 
   // Ruta para obtener las interacciones de un capítulo
-  fastify.get("/chapters/:id/interactions", interactionController.getInteractionsForChapter);
+  fastify.get(
+    "/chapters/:id/interactions",
+    { schema: getInteractionsSchema },
+    interactionController.getInteractionsForChapter,
+  );
 }
 
 export default interactionRoutes;

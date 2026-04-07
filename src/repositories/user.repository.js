@@ -25,8 +25,8 @@ const safeSelect = {
   updatedAt: true,
 };
 
-export async function findById(id) {
-  return await prisma.user.findUnique({ where: { id } });
+export async function findById(id, dbClient = prisma) {
+  return await dbClient.user.findUnique({ where: { id } });
 }
 
 export async function findByEmail(email) {
@@ -47,8 +47,12 @@ export async function create(data) {
   return await prisma.user.create({ data, select: safeSelect });
 }
 
-export async function update(id, data) {
-  return await prisma.user.update({ where: { id }, data, select: safeSelect });
+export async function update(id, data, dbClient = prisma) {
+  return await dbClient.user.update({
+    where: { id },
+    data,
+    select: safeSelect,
+  });
 }
 
 export async function softDelete(id) {

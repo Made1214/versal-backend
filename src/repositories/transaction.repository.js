@@ -4,8 +4,8 @@
 
 import prisma from "../config/prisma.js";
 
-export async function create(data) {
-  return await prisma.transaction.create({ data });
+export async function create(data, dbClient = prisma) {
+  return await dbClient.transaction.create({ data });
 }
 
 export async function findByMetadata(key, value) {
@@ -22,7 +22,7 @@ export async function updateManyByMetadata(key, value, data) {
   return await prisma.transaction.updateMany({
     where: {
       metadata: { path: [key], equals: value },
-      status: 'COMPLETED'
+      status: "COMPLETED",
     },
     data,
   });
@@ -35,8 +35,8 @@ export async function findByUser(userId) {
   });
 }
 
-export async function createDonation(data) {
-  return await prisma.donation.create({ data });
+export async function createDonation(data, dbClient = prisma) {
+  return await dbClient.donation.create({ data });
 }
 
 // Aliases for backward compatibility
@@ -45,7 +45,7 @@ export async function createTransaction(data) {
 }
 
 export async function findTransactionBySessionId(sessionId) {
-  return await findByMetadata('stripeCheckoutSessionId', sessionId);
+  return await findByMetadata("stripeCheckoutSessionId", sessionId);
 }
 
 export async function updateTransaction(id, data) {

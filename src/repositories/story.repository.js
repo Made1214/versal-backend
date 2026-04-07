@@ -13,8 +13,11 @@ const storyInclude = {
 
 // --- Stories ---
 
-export async function findById(id) {
-  return await prisma.story.findUnique({ where: { id }, include: storyInclude });
+export async function findById(id, dbClient = prisma) {
+  return await dbClient.story.findUnique({
+    where: { id },
+    include: storyInclude,
+  });
 }
 
 export async function findMany(where, { skip = 0, take = 20 } = {}) {
@@ -36,7 +39,11 @@ export async function create(data) {
 }
 
 export async function update(id, data) {
-  return await prisma.story.update({ where: { id }, data, include: storyInclude });
+  return await prisma.story.update({
+    where: { id },
+    data,
+    include: storyInclude,
+  });
 }
 
 export async function remove(id) {

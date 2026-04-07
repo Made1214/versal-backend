@@ -1,6 +1,6 @@
 import * as authService from "./auth.service.js";
 import * as userService from "../users/user.service.js";
-import { UnauthorizedError } from "../../utils/errors.js";
+import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -76,7 +76,7 @@ async function oauthGoogleCallback(request, reply) {
   const profile = await userInfoResp.json();
 
   if (!profile.email) {
-    throw new Error("No se obtuvo email de Google");
+    throw new ValidationError("No se obtuvo email de Google");
   }
 
   const user = await authService.findOrCreateOAuthUser({
@@ -150,7 +150,7 @@ async function logout(request, reply) {
 async function me(request, reply) {
   const userId = request.user && request.user.userId;
   if (!userId) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError("Unauthorized");
   }
 
   const user = await userService.getUserById({ userId });

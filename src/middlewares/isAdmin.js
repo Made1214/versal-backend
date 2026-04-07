@@ -1,5 +1,5 @@
-import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
-import isAuthenticated from './isAuthenticated.js';
+import { ForbiddenError } from "../utils/errors.js";
+import isAuthenticated from "./isAuthenticated.js";
 
 /**
  * Middleware para verificar que el usuario sea administrador
@@ -8,10 +8,12 @@ import isAuthenticated from './isAuthenticated.js';
 async function isAdmin(request, reply) {
   // Primero verificar autenticación
   await isAuthenticated(request, reply);
-  
+
   // Verificar que el usuario tenga rol de admin
-  if (!request.user || request.user.role !== 'admin') {
-    throw new ForbiddenError('Acceso denegado: se requieren permisos de administrador');
+  if (!request.user || request.user.role !== "admin") {
+    throw new ForbiddenError(
+      "Acceso denegado: se requieren permisos de administrador",
+    );
   }
 }
 
