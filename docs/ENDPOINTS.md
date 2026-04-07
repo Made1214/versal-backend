@@ -11,9 +11,11 @@ Los endpoints protegidos requieren: `Authorization: Bearer <token>`
 ## 🔐 Auth Endpoints
 
 ### POST /auth/register
+
 Registra un nuevo usuario.
 
 **Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -24,6 +26,7 @@ Registra un nuevo usuario.
 ```
 
 **Response 201:**
+
 ```json
 {
   "user": { "id": "...", "email": "...", "username": "..." },
@@ -32,9 +35,11 @@ Registra un nuevo usuario.
 ```
 
 ### POST /auth/login
+
 Inicia sesión.
 
 **Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -43,6 +48,7 @@ Inicia sesión.
 ```
 
 **Response 200:**
+
 ```json
 {
   "user": { "id": "...", "email": "...", "username": "..." },
@@ -51,9 +57,11 @@ Inicia sesión.
 ```
 
 ### GET /auth/me
+
 Obtiene el usuario actual. **Requiere autenticación.**
 
 **Response 200:**
+
 ```json
 {
   "user": { "id": "...", "email": "...", "username": "...", "role": "..." }
@@ -61,9 +69,11 @@ Obtiene el usuario actual. **Requiere autenticación.**
 ```
 
 ### POST /auth/refresh
+
 Refresca el token de acceso.
 
 **Response 200:**
+
 ```json
 {
   "accessToken": "new_jwt_token"
@@ -71,9 +81,11 @@ Refresca el token de acceso.
 ```
 
 ### POST /auth/logout
+
 Cierra sesión del usuario.
 
 **Response 200:**
+
 ```json
 {
   "message": "Sesión cerrada exitosamente"
@@ -81,9 +93,11 @@ Cierra sesión del usuario.
 ```
 
 ### POST /auth/forgot-password
+
 Solicita recuperación de contraseña.
 
 **Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -91,9 +105,11 @@ Solicita recuperación de contraseña.
 ```
 
 ### POST /auth/reset-password
+
 Resetea la contraseña con el token recibido.
 
 **Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -103,9 +119,11 @@ Resetea la contraseña con el token recibido.
 ```
 
 ### GET /auth/oauth/google
+
 Inicia el flujo de autenticación con Google OAuth.
 
 ### GET /auth/oauth/google/callback
+
 Callback de Google OAuth.
 
 ---
@@ -113,14 +131,17 @@ Callback de Google OAuth.
 ## 📚 Stories Endpoints
 
 ### GET /stories
+
 Obtiene todas las historias publicadas.
 
 **Query Params:**
+
 - `search` (opcional): Buscar por título o descripción
 - `categoryName` (opcional): Filtrar por categoría
 - `tagName` (opcional): Filtrar por etiqueta
 
 **Response 200:**
+
 ```json
 {
   "stories": [
@@ -140,9 +161,11 @@ Obtiene todas las historias publicadas.
 ```
 
 ### GET /stories/:id
+
 Obtiene una historia por ID.
 
 **Response 200:**
+
 ```json
 {
   "story": {
@@ -159,31 +182,33 @@ Obtiene una historia por ID.
 ```
 
 ### POST /stories
+
 Crea una nueva historia. **Requiere autenticación.**
 
-**Body:**
-```json
-{
-  "title": "Título de la historia",
-  "description": "Descripción",
-  "category": "Aventura",
-  "tags": ["magia", "fantasía"],
-  "language": "es",
-  "isAdultContent": false
-}
-```
+**Body:** Multipart form-data con campos y archivo de portada.
+
+- `title` (required)
+- `description`
+- `category`
+- `tags` (JSON array)
+- `language`
+- `isAdultContent`
+- `coverImage` (file, requerido)
 
 **Response 201:**
+
 ```json
 {
   "story": { "id": "...", "title": "...", "status": "draft", ... }
 }
 ```
 
-### PUT /stories/:id
+### PATCH /stories/:id
+
 Actualiza una historia. **Requiere autenticación y ser el autor.**
 
-**Body:**
+**Body:** Puede ser multipart form-data o JSON.
+
 ```json
 {
   "title": "Nuevo título",
@@ -195,19 +220,35 @@ Actualiza una historia. **Requiere autenticación y ser el autor.**
 ```
 
 ### DELETE /stories/:id
+
 Elimina una historia. **Requiere autenticación y ser el autor.**
 
 **Response 200:**
+
 ```json
 {
   "message": "Historia eliminada exitosamente"
 }
 ```
 
+### GET /stories/me
+
+Obtiene las historias del autor autenticado. **Requiere autenticación.**
+
+**Response 200:**
+
+```json
+{
+  "stories": [ ... ]
+}
+```
+
 ### GET /stories/categories
+
 Obtiene todas las categorías disponibles.
 
 **Response 200:**
+
 ```json
 {
   "categories": [
@@ -218,9 +259,11 @@ Obtiene todas las categorías disponibles.
 ```
 
 ### GET /stories/tags
+
 Obtiene todas las etiquetas disponibles.
 
 **Response 200:**
+
 ```json
 {
   "tags": [
@@ -231,12 +274,15 @@ Obtiene todas las etiquetas disponibles.
 ```
 
 ### GET /stories/author/:authorId
-Obtiene historias de un autor específico. **Requiere autenticación.**
+
+Obtiene historias de un autor específico. **No requiere autenticación.**
 
 ### GET /stories/category/:categoryName
+
 Obtiene historias por categoría.
 
 ### GET /stories/tag/:tagName
+
 Obtiene historias por etiqueta.
 
 ---
@@ -244,9 +290,11 @@ Obtiene historias por etiqueta.
 ## 📖 Chapters Endpoints
 
 ### GET /stories/:storyId/chapters
+
 Obtiene todos los capítulos de una historia.
 
 **Response 200:**
+
 ```json
 {
   "chapters": [
@@ -264,9 +312,11 @@ Obtiene todos los capítulos de una historia.
 ```
 
 ### GET /chapters/:id
+
 Obtiene un capítulo por ID.
 
 **Response 200:**
+
 ```json
 {
   "chapter": {
@@ -280,9 +330,11 @@ Obtiene un capítulo por ID.
 ```
 
 ### POST /stories/:storyId/chapters
+
 Crea un nuevo capítulo. **Requiere autenticación y ser el autor.**
 
 **Body:**
+
 ```json
 {
   "title": "Título del capítulo",
@@ -292,6 +344,7 @@ Crea un nuevo capítulo. **Requiere autenticación y ser el autor.**
 ```
 
 **Response 201:**
+
 ```json
 {
   "chapter": {
@@ -304,9 +357,11 @@ Crea un nuevo capítulo. **Requiere autenticación y ser el autor.**
 ```
 
 ### PUT /chapters/:id
+
 Actualiza un capítulo. **Requiere autenticación y ser el autor.**
 
 **Body:**
+
 ```json
 {
   "title": "Nuevo título",
@@ -316,14 +371,17 @@ Actualiza un capítulo. **Requiere autenticación y ser el autor.**
 ```
 
 ### DELETE /chapters/:id
+
 Elimina un capítulo. **Requiere autenticación y ser el autor.**
 
-### POST /chapters/:id/upload-image
+### POST /chapters/upload-image
+
 Sube una imagen para un capítulo. **Requiere autenticación.**
 
-**Body:** Multipart form-data con el archivo de imagen
+**Body:** Multipart form-data con el archivo de imagen.
 
 **Response 200:**
+
 ```json
 {
   "url": "https://cloudinary.com/..."
@@ -331,9 +389,11 @@ Sube una imagen para un capítulo. **Requiere autenticación.**
 ```
 
 ### GET /stories/:storyId/published-chapters-count
+
 Obtiene el conteo de capítulos publicados de una historia.
 
 **Response 200:**
+
 ```json
 {
   "publishedChapterCount": 5
@@ -345,48 +405,59 @@ Obtiene el conteo de capítulos publicados de una historia.
 ## 👥 Users Endpoints
 
 ### GET /users/:id/followers
+
 Obtiene los seguidores de un usuario.
 
 **Response 200:**
+
 ```json
 {
-  "followers": [
-    { "id": "...", "username": "...", "profileImage": "..." }
-  ]
+  "followers": [{ "id": "...", "username": "...", "profileImage": "..." }]
 }
 ```
 
 ### GET /users/:id/following
+
 Obtiene los usuarios que sigue un usuario.
 
 **Response 200:**
+
 ```json
 {
-  "following": [
-    { "id": "...", "username": "...", "profileImage": "..." }
-  ]
+  "following": [{ "id": "...", "username": "...", "profileImage": "..." }]
 }
 ```
 
 ### POST /users/:id/follow
+
 Sigue a un usuario. **Requiere autenticación.**
 
-### DELETE /users/:id/unfollow
+### POST /users/:id/unfollow
+
 Deja de seguir a un usuario. **Requiere autenticación.**
 
 ### POST /users/:id/block
+
 Bloquea a un usuario. **Requiere autenticación.**
 
-### DELETE /users/:id/unblock
+### POST /users/:id/unblock
+
 Desbloquea a un usuario. **Requiere autenticación.**
 
-### GET /users/:id/blocked
-Obtiene la lista de usuarios bloqueados. **Requiere autenticación.**
+### GET /users/me/blocked
 
-### PUT /users/profile
-Actualiza el perfil del usuario. **Requiere autenticación.**
+Obtiene la lista de usuarios bloqueados del usuario autenticado. **Requiere autenticación.**
+
+### GET /users/:id
+
+Obtiene el perfil de un usuario por ID. **Requiere autenticación.**
+
+### PUT /users/me
+
+Actualiza el perfil del usuario autenticado. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
   "fullName": "Nuevo Nombre",
@@ -396,14 +467,61 @@ Actualiza el perfil del usuario. **Requiere autenticación.**
 }
 ```
 
-### PUT /users/password
-Cambia la contraseña del usuario. **Requiere autenticación.**
+### PUT /users/me/password
+
+Cambia la contraseña del usuario autenticado. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
   "oldPassword": "OldPassword123!",
   "newPassword": "NewPassword123!"
+}
+```
+
+### GET /users/all
+
+Obtiene todos los usuarios. **Requiere autenticación y rol admin.**
+
+**Response 200:**
+
+```json
+[{ "id": "...", "username": "...", "email": "...", "role": "user" }]
+```
+
+### DELETE /users/:id
+
+Elimina un usuario. **Requiere autenticación y rol admin.**
+
+**Response 200:**
+
+```json
+{
+  "message": "Usuario eliminado exitosamente"
+}
+```
+
+### PUT /users/:userId/role
+
+Actualiza el rol de un usuario. **Requiere autenticación y rol admin.**
+
+**Body:**
+
+```json
+{
+  "role": "admin"
+}
+```
+
+**Response 200:**
+
+```json
+{
+  "id": "...",
+  "username": "...",
+  "email": "...",
+  "role": "admin"
 }
 ```
 
@@ -412,38 +530,41 @@ Cambia la contraseña del usuario. **Requiere autenticación.**
 ## ❤️ Favorites Endpoints
 
 ### GET /favorites/me/favorites
+
 Obtiene las historias favoritas del usuario. **Requiere autenticación.**
 
 **Response 200:**
+
 ```json
 {
-  "favorites": [
+  "stories": [
     {
-      "story": {
-        "id": "...",
-        "title": "...",
-        "author": { "username": "..." }
-      }
+      "id": "...",
+      "title": "...",
+      "author": { "username": "..." }
     }
   ]
 }
 ```
 
 ### POST /favorites/stories/:storyId/favorite
+
 Agrega o quita una historia de favoritos. **Requiere autenticación.**
 
 **Response 200:**
+
 ```json
 {
-  "message": "Historia agregada a favoritos",
-  "isFavorite": true
+  "status": "favorited"
 }
 ```
 
 ### GET /favorites/stories/:storyId/isFavorite
+
 Verifica si una historia es favorita. **Requiere autenticación.**
 
 **Response 200:**
+
 ```json
 {
   "isFavorite": true
@@ -455,9 +576,11 @@ Verifica si una historia es favorita. **Requiere autenticación.**
 ## 💬 Interactions Endpoints
 
 ### GET /chapters/:id/interactions
+
 Obtiene las interacciones (likes y comentarios) de un capítulo.
 
 **Response 200:**
+
 ```json
 {
   "likesCount": 10,
@@ -465,42 +588,49 @@ Obtiene las interacciones (likes y comentarios) de un capítulo.
     {
       "id": "...",
       "user": { "username": "...", "profileImage": "..." },
-      "content": "Excelente capítulo!",
-      "createdAt": "...",
-      "replies": [...]
+      "interactionType": "comment",
+      "text": "Excelente capítulo!",
+      "createdAt": "..."
     }
   ]
 }
 ```
 
-### POST /chapters/:id/like
-Da like a un capítulo. **Requiere autenticación.**
+### POST /chapters/:id/interactions
 
-### DELETE /chapters/:id/unlike
-Quita el like de un capítulo. **Requiere autenticación.**
-
-### POST /chapters/:id/comments
-Agrega un comentario a un capítulo. **Requiere autenticación.**
+Agrega una interacción (like o comentario) a un capítulo. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
-  "content": "Excelente capítulo!",
-  "parentId": null
+  "interactionType": "like"
 }
 ```
 
-### DELETE /comments/:id
-Elimina un comentario. **Requiere autenticación y ser el autor.**
+o
+
+```json
+{
+  "interactionType": "comment",
+  "text": "Excelente capítulo!"
+}
+```
+
+### DELETE /interactions/:interactionId
+
+Elimina un like o un comentario. **Requiere autenticación.**
 
 ---
 
 ## 🚨 Reports Endpoints
 
 ### POST /reports
+
 Crea un reporte de contenido. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
   "contentId": "story_or_comment_id",
@@ -511,6 +641,7 @@ Crea un reporte de contenido. **Requiere autenticación.**
 ```
 
 **Razones válidas:**
+
 - `Spam`
 - `Contenido de odio`
 - `Acoso`
@@ -520,6 +651,7 @@ Crea un reporte de contenido. **Requiere autenticación.**
 - `Otro`
 
 **Response 201:**
+
 ```json
 {
   "report": {
@@ -531,13 +663,16 @@ Crea un reporte de contenido. **Requiere autenticación.**
 }
 ```
 
-### GET /reports
+### GET /admin/reports
+
 Obtiene todos los reportes. **Requiere autenticación y rol admin.**
 
 **Query Params:**
+
 - `status` (opcional): `pending`, `in_review`, `resolved`, `dismissed`
 
 **Response 200:**
+
 ```json
 {
   "reports": [
@@ -553,10 +688,12 @@ Obtiene todos los reportes. **Requiere autenticación y rol admin.**
 }
 ```
 
-### PUT /reports/:reportId/status
+### PATCH /admin/reports/:reportId
+
 Actualiza el estado de un reporte. **Requiere autenticación y rol admin.**
 
 **Body:**
+
 ```json
 {
   "status": "resolved"
@@ -564,6 +701,7 @@ Actualiza el estado de un reporte. **Requiere autenticación y rol admin.**
 ```
 
 **Estados válidos:**
+
 - `in_review`
 - `resolved`
 - `dismissed`
@@ -573,9 +711,11 @@ Actualiza el estado de un reporte. **Requiere autenticación y rol admin.**
 ## 💰 Transactions Endpoints
 
 ### GET /products/subscriptions
+
 Obtiene los planes de suscripción disponibles.
 
 **Response 200:**
+
 ```json
 {
   "plans": [
@@ -590,9 +730,11 @@ Obtiene los planes de suscripción disponibles.
 ```
 
 ### GET /products/coin-packs
+
 Obtiene los paquetes de monedas disponibles.
 
 **Response 200:**
+
 ```json
 {
   "packs": [
@@ -608,9 +750,11 @@ Obtiene los paquetes de monedas disponibles.
 ```
 
 ### POST /transactions/checkout/subscription
+
 Crea una sesión de checkout para suscripción. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
   "planId": "price_stripe_id"
@@ -618,6 +762,7 @@ Crea una sesión de checkout para suscripción. **Requiere autenticación.**
 ```
 
 **Response 200:**
+
 ```json
 {
   "sessionId": "cs_...",
@@ -625,10 +770,12 @@ Crea una sesión de checkout para suscripción. **Requiere autenticación.**
 }
 ```
 
-### POST /transactions/checkout/coins
-Crea una sesión de checkout para compra de monedas. **Requiere autenticación.**
+### POST /transactions/checkout/coin-pack
+
+Crea una sesión de checkout para compra de pack de monedas. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
   "coinPackId": "price_stripe_id"
@@ -636,6 +783,7 @@ Crea una sesión de checkout para compra de monedas. **Requiere autenticación.*
 ```
 
 **Response 200:**
+
 ```json
 {
   "sessionId": "cs_...",
@@ -644,9 +792,11 @@ Crea una sesión de checkout para compra de monedas. **Requiere autenticación.*
 ```
 
 ### GET /transactions/me
+
 Obtiene el historial de transacciones del usuario. **Requiere autenticación.**
 
 **Response 200:**
+
 ```json
 {
   "transactions": [
@@ -662,73 +812,60 @@ Obtiene el historial de transacciones del usuario. **Requiere autenticación.**
 }
 ```
 
+### GET /transactions/balance
+
+Obtiene el balance de Stripe. **Requiere autenticación.**
+
+**Response 200:**
+
+```json
+{
+  "balance": {
+    "available": [ ... ],
+    "pending": [ ... ]
+  }
+}
+```
+
 ### POST /transactions/stripe-webhook
+
 Webhook de Stripe para procesar eventos de pago.
 
 **Headers:**
+
 - `stripe-signature`: Firma de Stripe
 
 ---
 
 ## 💸 Donations Endpoints
 
-### POST /transactions/donate
-Realiza una donación a un autor. **Requiere autenticación.**
+### POST /donations/stories/:storyId/donate
+
+Realiza una donación a un autor a partir de una historia. **Requiere autenticación.**
 
 **Body:**
+
 ```json
 {
-  "recipientId": "author_user_id",
-  "storyId": "story_id",
-  "amount": 5.00,
+  "amount": 5,
   "message": "¡Excelente historia!"
 }
 ```
 
-**Response 200:**
+**Response 201:**
+
 ```json
 {
+  "success": true,
   "donation": {
-    "id": "...",
-    "amount": 5.00,
-    "status": "completed"
+    "_id": "...",
+    "amount": 5,
+    "donatorId": "...",
+    "recipientId": "...",
+    "storyId": "...",
+    "message": "¡Excelente historia!",
+    "createdAt": "..."
   }
-}
-```
-
-### GET /donations/received
-Obtiene las donaciones recibidas. **Requiere autenticación.**
-
-**Response 200:**
-```json
-{
-  "donations": [
-    {
-      "id": "...",
-      "donator": { "username": "..." },
-      "amount": 5.00,
-      "message": "...",
-      "createdAt": "..."
-    }
-  ]
-}
-```
-
-### GET /donations/sent
-Obtiene las donaciones enviadas. **Requiere autenticación.**
-
-**Response 200:**
-```json
-{
-  "donations": [
-    {
-      "id": "...",
-      "recipient": { "username": "..." },
-      "story": { "title": "..." },
-      "amount": 5.00,
-      "createdAt": "..."
-    }
-  ]
 }
 ```
 
@@ -737,6 +874,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ## Códigos de Error Comunes
 
 ### 400 Bad Request
+
 ```json
 {
   "error": "ValidationError",
@@ -746,6 +884,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "UnauthorizedError",
@@ -755,6 +894,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "error": "ForbiddenError",
@@ -764,6 +904,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "error": "NotFoundError",
@@ -773,6 +914,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "InternalServerError",
@@ -797,6 +939,7 @@ Obtiene las donaciones enviadas. **Requiere autenticación.**
 ## Ejemplos de Uso
 
 ### Registro y Login
+
 ```bash
 # Registro
 curl -X POST http://localhost:3000/api/auth/register \
@@ -810,6 +953,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 ### Crear una Historia
+
 ```bash
 # Obtener token primero (del login)
 TOKEN="your_jwt_token_here"
@@ -827,6 +971,7 @@ curl -X POST http://localhost:3000/api/stories \
 ```
 
 ### Crear un Capítulo
+
 ```bash
 curl -X POST http://localhost:3000/api/stories/STORY_ID/chapters \
   -H "Content-Type: application/json" \
@@ -839,12 +984,14 @@ curl -X POST http://localhost:3000/api/stories/STORY_ID/chapters \
 ```
 
 ### Dar Like a un Capítulo
+
 ```bash
 curl -X POST http://localhost:3000/api/chapters/CHAPTER_ID/like \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Agregar a Favoritos
+
 ```bash
 curl -X POST http://localhost:3000/api/favorites/stories/STORY_ID/favorite \
   -H "Authorization: Bearer $TOKEN"
