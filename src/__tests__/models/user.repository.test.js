@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as userRepo from "../../repositories/user.repository.js";
 
-vi.mock("../../config/prisma.js");
-
 describe("User Repository", () => {
-  beforeEach(() => vi.clearAllMocks());
 
   describe("findById", () => {
     it("retorna usuario si existe", async () => {

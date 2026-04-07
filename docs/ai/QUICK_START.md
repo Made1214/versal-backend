@@ -139,21 +139,55 @@ export const loginSchema = {
 - ✅ Health check endpoint (`GET /health`)
 - ✅ Validación de email en registro
 - ✅ Validación de Stripe keys
-- ✅ 83 tests pasando
+- ✅ Repository Pattern implementado (10 repositories)
+- ✅ Cloudinary integrado para uploads de imágenes
+- ✅ 95+ tests pasando
 
-### ⏳ Pendiente (Fase 3.4 - Nice to Have)
+### ⏳ Pendiente (Fase 3.7 - Nice to Have)
 
-- [ ] Extraer lógica de upload a util reutilizable
 - [ ] Transacciones de Prisma para operaciones críticas
-- [ ] Repository pattern para otros modelos
 - [ ] Tests unitarios y de integración completos
 - [ ] Docker setup
 - [ ] Inyección de dependencias
-- [ ] Migrar followers/following a colección separada
+- [ ] Caching con Redis (opcional)
+- [ ] GraphQL API (opcional)
 
 ---
 
-## 🔧 Comandos Útiles
+## 📸 Uploads de Imágenes (Cloudinary)
+
+**Cómo funciona**:
+1. Cliente envía archivo en multipart/form-data
+2. Backend recibe con `req.parts()`
+3. Sube a Cloudinary (servicio externo)
+4. Retorna URL segura
+5. Se guarda URL en BD (no el archivo)
+
+**Funciones disponibles** en `src/utils/fileUpload.js`:
+```javascript
+import { uploadAvatar, uploadCover, uploadChapterImage } from "../../utils/fileUpload.js";
+
+// En controller
+const avatarUrl = await uploadAvatar(file);
+const coverUrl = await uploadCover(file);
+const chapterImageUrl = await uploadChapterImage(file);
+```
+
+**Variables de entorno necesarias**:
+```
+CLOUDINARY_CLOUD_NAME=di4qby2sl
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
+```
+
+**Beneficios**:
+- ✅ 25 GB/mes gratis
+- ✅ CDN global incluido
+- ✅ Transformaciones automáticas
+- ✅ No consume espacio del servidor
+- ✅ Escalable para producción
+
+---
 
 ```bash
 # Desarrollo
@@ -232,4 +266,4 @@ pnpm remove jsonwebtoken  # Eliminar dependencia no usada
 ---
 
 **Última actualización**: 31/03/2026  
-**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ✅ | Fase 3.1 ✅ | Fase 3.3 ✅ | Fase 3.4 ⏳
+**Estado**: Fase 1 ✅ + Mejoras ✅ | Fase 2 ✅ | Fase 3.1 ✅ | Fase 3.3 ✅ | Fase 3.4 ✅ | Fase 3.5 ✅ | Fase 3.6 ✅ | Fase 3.7 ⏳

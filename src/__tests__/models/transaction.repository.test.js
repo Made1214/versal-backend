@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as transactionRepo from "../../repositories/transaction.repository.js";
 
-vi.mock("../../config/prisma.js");
-
 describe("Transaction Repository", () => {
-  beforeEach(() => vi.clearAllMocks());
 
   describe("createTransaction", () => {
     it("crea transacción", async () => {

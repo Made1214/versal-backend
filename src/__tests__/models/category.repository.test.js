@@ -1,15 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as categoryRepository from "../../repositories/category.repository.js";
 import { ValidationError, NotFoundError, ConflictError } from "../../utils/errors.js";
 
-// Mock de Prisma
-vi.mock("../../config/prisma.js");
-
 describe("Category Repository", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
 
   describe("createCategory", () => {
     it("debe crear una categoría con datos válidos", async () => {

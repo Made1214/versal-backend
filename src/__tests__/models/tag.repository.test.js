@@ -1,15 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as tagRepository from "../../repositories/tag.repository.js";
 import { ValidationError, NotFoundError, ConflictError } from "../../utils/errors.js";
 
-// Mock de Prisma
-vi.mock("../../config/prisma.js");
-
 describe("Tag Repository", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
 
   describe("createTag", () => {
     it("debe crear una etiqueta con datos válidos", async () => {

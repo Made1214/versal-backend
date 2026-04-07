@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as chapterRepo from "../../repositories/chapter.repository.js";
 
-vi.mock("../../config/prisma.js");
-
 describe("Chapter Repository", () => {
-  beforeEach(() => vi.clearAllMocks());
 
   describe("findById", () => {
     it("retorna capítulo con story incluida", async () => {

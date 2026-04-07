@@ -342,17 +342,53 @@ PostgreSQL (Base de datos)
 
 ---
 
-## Fase 3.6 - Nice to Have (Siguiente)
+## ✅ Fase 3.6 - Upload a Cloudinary (Completada 31/03/2026)
 
-### ⏳ Tareas Pendientes
+### ✅ 1. Integración de Cloudinary para Almacenamiento de Imágenes
+- **Antes**: Imágenes se guardaban en disco local (`uploads/avatars`, `uploads/covers`, `uploads/chapters`)
+  - ❌ Consume espacio en servidor
+  - ❌ No escala en producción (múltiples servidores)
+  - ❌ Requiere backups manuales
+  - ❌ No tiene CDN
 
-1. [ ] Extraer lógica de upload a util reutilizable
-2. [ ] Transacciones de Prisma para operaciones críticas
-3. [ ] Tests unitarios y de integración completos (repository tests)
-4. [ ] Docker setup
-5. [ ] Inyección de dependencias
-6. [ ] Caching con Redis (opcional)
-7. [ ] GraphQL API (opcional)
+- **Después**: Imágenes se suben a Cloudinary (servicio externo gratuito)
+  - ✅ Librería `cloudinary` instalada (v2.9.0)
+  - ✅ `src/utils/fileUpload.js` refactorizado para usar Cloudinary
+  - ✅ Funciones genéricas:
+    - `uploadFile(file, folder)` - Sube a carpeta específica en Cloudinary
+    - `uploadAvatar(file)` - Sube avatar a `versal/avatars`
+    - `uploadCover(file)` - Sube portada a `versal/covers`
+    - `uploadChapterImage(file)` - Sube imagen de capítulo a `versal/chapters`
+  - ✅ Controllers/Services actualizados:
+    - `src/features/users/user.controller.js` - `updateProfile()` usa `uploadAvatar()`
+    - `src/features/stories/story.controller.js` - `createStory()` usa `uploadCover()`
+    - `src/features/chapters/chapter.service.js` - `uploadChapterImage()` usa utility
+  - ✅ Variables de entorno agregadas a `.env.example`:
+    - `CLOUDINARY_CLOUD_NAME=di4qby2sl`
+    - `CLOUDINARY_API_KEY=` (pendiente)
+    - `CLOUDINARY_API_SECRET=` (pendiente)
+
+- **Beneficios**:
+  - ✅ Almacenamiento escalable - 25 GB/mes gratis
+  - ✅ CDN global incluido - Imágenes servidas rápido
+  - ✅ Transformaciones automáticas - Redimensionar, comprimir
+  - ✅ Código limpio - Lógica centralizada en utility
+  - ✅ Fácil migración - Cambiar a otro servicio sin tocar controllers
+  - ✅ Seguridad - API keys no expuestas en frontend
+
+- **Próximos pasos**:
+  - Agregar credenciales de Cloudinary en `.env` local
+  - Probar uploads de avatares, portadas e imágenes de capítulos
+  - Verificar que URLs se guardan correctamente en BD
+
+### ⏳ Tareas Pendientes (Fase 3.7)
+
+1. [ ] Transacciones de Prisma para operaciones críticas
+2. [ ] Tests unitarios y de integración completos (repository tests)
+3. [ ] Docker setup
+4. [ ] Inyección de dependencias
+5. [ ] Caching con Redis (opcional)
+6. [ ] GraphQL API (opcional)
 
 ---
 
@@ -365,16 +401,16 @@ PostgreSQL (Base de datos)
 ✅ Fase 3.1 completada - Schemas compartidos + Auto-loader de rutas  
 ✅ Fase 3.3 completada - Separación de story.model.js en 3 repositorios + 83+ tests  
 ✅ Fase 3.4 completada - Repository pattern para todos los modelos + 95+ tests  
-✅ Fase 3.5 completada - Followers/Following ya está optimizado
+✅ Fase 3.5 completada - Followers/Following ya está optimizado  
+✅ Fase 3.6 completada - Integración de Cloudinary para uploads
 
-### Próxima Fase (Fase 3.6 - Nice to Have)
-1. Extraer lógica de upload a util reutilizable
-2. Transacciones de Prisma para operaciones críticas
-3. Tests unitarios y de integración completos (repository tests)
-4. Docker setup
-5. Inyección de dependencias
-6. Caching con Redis (opcional)
-7. GraphQL API (opcional)
+### Próxima Fase (Fase 3.7 - Nice to Have)
+1. Transacciones de Prisma para operaciones críticas
+2. Tests unitarios y de integración completos (repository tests)
+3. Docker setup
+4. Inyección de dependencias
+5. Caching con Redis (opcional)
+6. GraphQL API (opcional)
 
 ---
 
@@ -411,6 +447,6 @@ PostgreSQL (Base de datos)
 
 ---
 
-**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Repository) - 100% Completada ✅ | Fase 3.5 (Followers) - 100% Completada ✅ | Fase 3.6 (Nice to Have) ⏳  
-**Próximo paso**: Comenzar Fase 3.6 (Extraer lógica de upload, transacciones de Prisma, tests completos, etc.)  
+**Estado**: Fase 1 (Críticos) - 100% Completada ✅ | Fase 2 (Importantes) - 100% Completada ✅ | Fase 3.1 (Optimizaciones) - 100% Completada ✅ | Fase 3.3 (Modelos) - 100% Completada ✅ | Fase 3.4 (Repository) - 100% Completada ✅ | Fase 3.5 (Followers) - 100% Completada ✅ | Fase 3.6 (Cloudinary) - 100% Completada ✅ | Fase 3.7 (Nice to Have) ⏳  
+**Próximo paso**: Comenzar Fase 3.7 (Transacciones de Prisma, tests completos, Docker, etc.)  
 **Última actualización**: 31/03/2026
