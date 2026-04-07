@@ -11,13 +11,19 @@ cloudinary.config({
 function createCloudinaryStream(folder, resourceType = "image") {
   let uploadStream;
 
+  const uploadOptions = {
+    folder: `versal/${folder}`,
+    resource_type: resourceType,
+    overwrite: false,
+  };
+
+  if (resourceType === "image") {
+    uploadOptions.quality = "auto";
+  }
+
   const resultPromise = new Promise((resolver, reject) => {
     uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: resourceType,
-        overwrite: false,
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           return reject(error);
@@ -38,7 +44,11 @@ export async function uploadFromMultiPartFile(
     folder,
     resourceType,
   );
-  file.file.pipe(uploadStream);
+  if (file.file && typeof file.file.pipe === "function") {
+    file.file.pipe(uploadStream);
+  } else {
+    throw new Error("El archivo no es válido o no se pudo procesar.");
+  }
 
   const result = await resultPromise;
 
