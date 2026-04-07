@@ -14,13 +14,29 @@ import {
 } from "./story.schema.js";
 
 async function storyRoutes(fastify) {
-  fastify.get("/", { schema: getAllStoriesSchema }, storyController.getAllStories);
+  fastify.get(
+    "/",
+    { schema: getAllStoriesSchema },
+    storyController.getAllStories,
+  );
 
-  fastify.get("/:id", { schema: getStoryByIdSchema }, storyController.getStoryById);
+  fastify.get(
+    "/:id",
+    { schema: getStoryByIdSchema },
+    storyController.getStoryById,
+  );
 
   // Obtener categorías y etiquetas
-  fastify.get("/categories", { schema: getAllCategoriesSchema }, storyController.getAllCategories);
-  fastify.get("/tags", { schema: getAllTagsSchema }, storyController.getAllTags);
+  fastify.get(
+    "/categories",
+    { schema: getAllCategoriesSchema },
+    storyController.getAllCategories,
+  );
+  fastify.get(
+    "/tags",
+    { schema: getAllTagsSchema },
+    storyController.getAllTags,
+  );
 
   fastify.get(
     "/author/:authorId",
@@ -30,7 +46,7 @@ async function storyRoutes(fastify) {
         response: getAuthorStoriesSchema.response,
       },
     },
-    storyController.getStoriesByAuthorPublic
+    storyController.getStoriesByAuthorPublic,
   );
 
   // --- Rutas Privadas ---
@@ -44,23 +60,31 @@ async function storyRoutes(fastify) {
     privateRoutes.get(
       "/me",
       { schema: getAuthorStoriesSchema },
-      storyController.getStoriesByAuthor
+      storyController.getStoriesByAuthor,
     );
 
     // Actualizar una historia existente
-    privateRoutes.patch("/:id", { schema: updateStorySchema }, storyController.updateStory);
+    privateRoutes.patch("/:id", storyController.updateStory);
 
     // Eliminar una historia
-    privateRoutes.delete("/:id", { schema: deleteStorySchema }, storyController.deleteStory);
+    privateRoutes.delete(
+      "/:id",
+      { schema: deleteStorySchema },
+      storyController.deleteStory,
+    );
   });
 
   // Rutas para obtener historias por categoría o etiqueta
   fastify.get(
     "/category/:categoryName",
     { schema: getStoriesByCategorySchema },
-    storyController.getStoriesByCategory
+    storyController.getStoriesByCategory,
   );
-  fastify.get("/tag/:tagName", { schema: getStoriesByTagSchema }, storyController.getStoriesByTag);
+  fastify.get(
+    "/tag/:tagName",
+    { schema: getStoriesByTagSchema },
+    storyController.getStoriesByTag,
+  );
 }
 
 export default storyRoutes;

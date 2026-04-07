@@ -1,5 +1,5 @@
 import * as storyService from "./story.service.js";
-import { uploadCover } from "../../utils/fileUpload.js";
+import { deleteImage, uploadCover } from "../../utils/cloudinary.js";
 
 // Controlador para crear una nueva historia
 async function createStory(request, reply) {
@@ -9,10 +9,9 @@ async function createStory(request, reply) {
   const parts = request.parts();
   for await (const part of parts) {
     if (part.file) {
-      if (part.fieldname === "coverImage") {
-        const coverImageUrl = await uploadCover(part);
-        data.coverImage = coverImageUrl;
-      }
+      const uploadResult = await uploadCover(part);
+      data.coverImage = uploadResult.url;
+      data.coverImagePublicId = uploadResult.publicId;
     } else {
       if (part.fieldname === "characters" || part.fieldname === "tags") {
         data[part.fieldname] = JSON.parse(part.value);
@@ -23,7 +22,9 @@ async function createStory(request, reply) {
   }
 
   if (!data.coverImage) {
-    return reply.code(400).send({ error: "La imagen de portada es requerida." });
+    return reply
+      .code(400)
+      .send({ error: "La imagen de portada es requerida." });
   }
 
   const story = await storyService.createStory(data);
@@ -64,11 +65,46 @@ async function updateStory(request, reply) {
   const { userId } = request.user;
 
   const existingStory = await storyService.getStoryById(id);
-  if (existingStory.author._id.toString() !== userId.toString()) {
-    return reply.code(403).send({ error: "No tienes permiso para editar esta historia." });
+  if (existingStory.authorId !== userId) {
+    return reply
+      .code(403)
+      .send({ error: "No tienes permiso para editar esta historia." });
   }
 
-  const story = await storyService.updateStory(id, request.body);
+  const data = {};
+  const contentType = request.headers["content-type"] || "";
+  const isMultipart = contentType.includes("multipart/form-data");
+
+  if (isMultipart) {
+    const parts = request.parts();
+    for await (const part of parts) {
+      if (part.file) {
+        const uploadResult = await uploadCover(part);
+        data.coverImage = uploadResult.url;
+        data.coverImagePublicId = uploadResult.publicId;
+      } else if (!part.file) {
+        if (part.fieldname === "characters" || part.fieldname === "tags") {
+          data[part.fieldname] = JSON.parse(part.value);
+        } else {
+          data[part.fieldname] = part.value;
+        }
+      }
+    }
+  } else {
+    Object.assign(data, request.body);
+  }
+
+  const story = await storyService.updateStory(id, data);
+
+  // Si reemplazamos portada, limpiamos el archivo previo luego de persistir los cambios.
+  if (
+    data.coverImagePublicId &&
+    existingStory.coverImagePublicId &&
+    existingStory.coverImagePublicId !== data.coverImagePublicId
+  ) {
+    await deleteImage(existingStory.coverImagePublicId, "image");
+  }
+
   reply.send({ story });
 }
 
@@ -79,10 +115,16 @@ async function deleteStory(request, reply) {
 
   const existingStory = await storyService.getStoryById(id);
 
-  const isAuthor = existingStory.author?._id.toString() === userId.toString();
+  const isAuthor = existingStory.authorId === userId;
 
   if (!isAuthor && role !== "admin") {
-    return reply.code(403).send({ error: "No tienes permiso para eliminar esta historia." });
+    return reply
+      .code(403)
+      .send({ error: "No tienes permiso para eliminar esta historia." });
+  }
+
+  if (existingStory.coverImagePublicId) {
+    await deleteImage(existingStory.coverImagePublicId, "image");
   }
 
   const result = await storyService.deleteStory(id);

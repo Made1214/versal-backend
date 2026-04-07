@@ -13,6 +13,7 @@ const safeSelect = {
   username: true,
   email: true,
   profileImage: true,
+  profileImagePublicId: true,
   role: true,
   bio: true,
   subscriptionType: true,
@@ -37,7 +38,9 @@ export async function findByUsername(username) {
 }
 
 export async function findByOAuth(provider, oauthId) {
-  return await prisma.user.findUnique({ where: { oauthProvider_oauthId: { oauthProvider: provider, oauthId } } });
+  return await prisma.user.findUnique({
+    where: { oauthProvider_oauthId: { oauthProvider: provider, oauthId } },
+  });
 }
 
 export async function create(data) {
@@ -84,7 +87,9 @@ export async function deleteFollow(followerId, followeeId) {
 export async function findFollowers(userId) {
   const rows = await prisma.follow.findMany({
     where: { followeeId: userId },
-    select: { follower: { select: { id: true, username: true, profileImage: true } } },
+    select: {
+      follower: { select: { id: true, username: true, profileImage: true } },
+    },
   });
   return rows.map((r) => r.follower);
 }
@@ -92,7 +97,9 @@ export async function findFollowers(userId) {
 export async function findFollowing(userId) {
   const rows = await prisma.follow.findMany({
     where: { followerId: userId },
-    select: { followee: { select: { id: true, username: true, profileImage: true } } },
+    select: {
+      followee: { select: { id: true, username: true, profileImage: true } },
+    },
   });
   return rows.map((r) => r.followee);
 }
@@ -116,7 +123,11 @@ export async function deleteBlock(blockerId, blockedId) {
 export async function findBlockedUsers(userId) {
   const rows = await prisma.block.findMany({
     where: { blockerId: userId },
-    select: { blocked: { select: { id: true, username: true, email: true } } },
+    select: {
+      blocked: {
+        select: { id: true, username: true, email: true, profileImage: true },
+      },
+    },
   });
   return rows.map((r) => r.blocked);
 }

@@ -3,7 +3,10 @@ const chapterProperties = {
   story: { type: "string", description: "ID de la historia padre" },
   chapterNumber: { type: "number" },
   title: { type: "string" },
-  content: { type: "string", description: "Contenido del capítulo en formato HTML" },
+  content: {
+    type: "string",
+    description: "Contenido del capítulo en formato HTML",
+  },
   images: { type: "array", items: { type: "string" } },
   videos: { type: "array", items: { type: "string" } },
   status: { type: "string", enum: ["draft", "published", "archived"] },
@@ -27,7 +30,10 @@ const createChapterSchema = {
   params: {
     type: "object",
     properties: {
-      storyId: { type: "string", description: "ID de la historia a la que pertenece el capítulo" },
+      storyId: {
+        type: "string",
+        description: "ID de la historia a la que pertenece el capítulo",
+      },
     },
     required: ["storyId"],
   },
@@ -40,7 +46,17 @@ const createChapterSchema = {
         type: "string",
         description: "El contenido principal del capítulo, usualmente HTML.",
       },
-      status: { type: "string", enum: ["draft", "published"], default: "draft" },
+      videos: {
+        type: "array",
+        description:
+          "Lista opcional de URLs de YouTube para embeber en el capítulo.",
+        items: { type: "string", format: "uri" },
+      },
+      status: {
+        type: "string",
+        enum: ["draft", "published"],
+        default: "draft",
+      },
     },
   },
   response: {
@@ -108,12 +124,15 @@ const getChapterByIdSchema = {
 
 const updateChapterSchema = {
   summary: "Actualiza un capítulo",
-  description: "Actualiza el contenido, título o estado de un capítulo existente.",
+  description:
+    "Actualiza el contenido, título o estado de un capítulo existente.",
   tags: ["Chapters"],
   headers,
   params: {
     type: "object",
-    properties: { id: { type: "string", description: "ID del capítulo a actualizar" } },
+    properties: {
+      id: { type: "string", description: "ID del capítulo a actualizar" },
+    },
     required: ["id"],
   },
   body: {
@@ -121,6 +140,12 @@ const updateChapterSchema = {
     properties: {
       title: { type: "string" },
       content: { type: "string" },
+      videos: {
+        type: "array",
+        description:
+          "Lista opcional de URLs de YouTube para embeber en el capítulo.",
+        items: { type: "string", format: "uri" },
+      },
       status: { type: "string", enum: ["draft", "published", "archived"] },
     },
   },
@@ -146,7 +171,9 @@ const deleteChapterSchema = {
   headers,
   params: {
     type: "object",
-    properties: { id: { type: "string", description: "ID del capítulo a eliminar" } },
+    properties: {
+      id: { type: "string", description: "ID del capítulo a eliminar" },
+    },
     required: ["id"],
   },
   response: {
@@ -171,7 +198,15 @@ const uploadChapterImageSchema = {
       description: "Imagen subida exitosamente.",
       type: "object",
       properties: {
-        url: { type: "string", format: "uri", description: "URL pública de la imagen subida" },
+        url: {
+          type: "string",
+          format: "uri",
+          description: "URL pública de la imagen subida",
+        },
+        publicId: {
+          type: "string",
+          description: "Identificador del recurso en Cloudinary",
+        },
       },
     },
     400: {
