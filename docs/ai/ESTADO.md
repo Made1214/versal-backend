@@ -7,7 +7,7 @@
 
 - Backend: Fastify + Prisma + PostgreSQL.
 - Enfoque activo: hardening con fastify-best-practices.
-- Tests reportados (ultimo registro): 158 pasando, 2 suites fallando por variables de entorno.
+- Tests reportados (ultimo registro): 181 pasando, 0 suites fallando.
 
 ## Resumen Reciente
 
@@ -47,10 +47,10 @@
 ### Fase 3.7 - Nice to Have
 
 1. [x] Transacciones Prisma para operaciones criticas.
-2. [ ] Tests unitarios/integracion completos en modulos pendientes.
-3. [ ] Inyeccion de dependencias.
-4. [ ] Caching con Redis (opcional).
-5. [ ] GraphQL API (opcional).
+1. [x] Tests unitarios/integracion completos en modulos pendientes.
+1. [ ] Inyeccion de dependencias.
+1. [ ] Caching con Redis (opcional).
+1. [ ] GraphQL API (opcional).
 
 ## Orden de Ejecucion Recomendado
 
@@ -61,6 +61,6 @@
 
 ## Checklist de Cierre por Tarea
 
-- [ ] Tests del feature afectado.
+- [x] Tests del feature afectado.
 - [ ] Smoke test manual de endpoints sensibles.
-- [ ] Actualizar docs/ENDPOINTS.md si cambia contrato.
+- [x] Actualizar docs/ENDPOINTS.md si cambia contrato.

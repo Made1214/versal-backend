@@ -26,6 +26,8 @@ import fastifyMultipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import fastifyRawBody from "fastify-raw-body";
 import fastifyOAuth2 from "@fastify/oauth2";
+import databasePlugin from "./src/plugins/database.plugin.js";
+import routesPlugin from "./src/plugins/routes.plugin.js";
 
 // ESM equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +57,9 @@ fastify.register(jwt, {
 // Auth plugin (usa JWT)
 fastify.register(authPlugin);
 
+// Database
+fastify.register(databasePlugin);
+
 // Google OAuth2
 fastify.register(fastifyOAuth2, {
   name: "googleOAuth2",
@@ -78,12 +83,6 @@ fastify.register(fastifyOAuth2, {
 // Multipart
 fastify.register(fastifyMultipart);
 
-// Static files
-fastify.register(fastifyStatic, {
-  root: path.join(__dirname, "uploads"),
-  prefix: "/uploads/",
-});
-
 // Raw body (para webhooks de Stripe)
 fastify.register(fastifyRawBody, {
   field: "rawBody",
@@ -91,53 +90,7 @@ fastify.register(fastifyRawBody, {
   encoding: "utf8",
 });
 
-// ============================================
-// REGISTRAR RUTAS
-// ============================================
-
-// Health check endpoint
-fastify.get("/health", async (request, reply) => {
-  try {
-    // Verificar conexión a BD
-    await prisma.$queryRaw`SELECT 1`;
-
-    return {
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: "connected",
-    };
-  } catch (error) {
-    reply.code(503);
-    return {
-      status: "error",
-      timestamp: new Date().toISOString(),
-      database: "disconnected",
-      error: error.message,
-    };
-  }
-});
-
-// Importar y registrar rutas manualmente
-import authRoutes from "./src/features/auth/auth.routes.js";
-import storyRoutes from "./src/features/stories/story.routes.js";
-import chapterRoutes from "./src/features/chapters/chapter.routes.js";
-import userRoutes from "./src/features/users/user.routes.js";
-import favoriteRoutes from "./src/features/favorites/favorite.routes.js";
-import interactionRoutes from "./src/features/interactions/interaction.routes.js";
-import reportRoutes from "./src/features/reports/report.routes.js";
-import transactionRoutes from "./src/features/transactions/transaction.routes.js";
-import donationRoutes from "./src/features/donations/donation.routes.js";
-
-fastify.register(authRoutes, { prefix: "/api" });
-fastify.register(storyRoutes, { prefix: "/api/stories" });
-fastify.register(chapterRoutes, { prefix: "/api" });
-fastify.register(userRoutes, { prefix: "/api/users" });
-fastify.register(favoriteRoutes, { prefix: "/api/favorites" });
-fastify.register(interactionRoutes, { prefix: "/api" });
-fastify.register(reportRoutes, { prefix: "/api/reports" });
-fastify.register(transactionRoutes, { prefix: "/api" });
-fastify.register(donationRoutes, { prefix: "/api/donations" });
+fastify.register(routesPlugin);
 
 // ============================================
 // INICIAR SERVIDOR
