@@ -1,16 +1,17 @@
 import * as transactionService from "./transaction.service.js";
 import Stripe from "stripe";
 import { ValidationError } from "../../utils/errors.js";
+import config from "../../config/index.js";
 
 let stripeClient = null;
 
 function getStripeClient() {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  if (!config.STRIPE_SECRET_KEY) {
     throw new ValidationError("Stripe no está configurado.");
   }
 
   if (!stripeClient) {
-    stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+    stripeClient = new Stripe(config.STRIPE_SECRET_KEY);
   }
 
   return stripeClient;
@@ -48,7 +49,7 @@ async function createCoinPackCheckout(request, reply) {
 }
 
 async function stripeWebhook(request, reply) {
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  if (!config.STRIPE_WEBHOOK_SECRET) {
     throw new ValidationError("Stripe webhook no está configurado.");
   }
 
@@ -62,7 +63,7 @@ async function stripeWebhook(request, reply) {
   const event = stripe.webhooks.constructEvent(
     request.rawBody,
     sig,
-    process.env.STRIPE_WEBHOOK_SECRET,
+    config.STRIPE_WEBHOOK_SECRET,
   );
 
   await transactionService.handleStripeWebhookEvent(event);

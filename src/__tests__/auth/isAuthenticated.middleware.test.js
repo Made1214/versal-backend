@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { UnauthorizedError } from "../../utils/errors.js";
+import { NotFoundError, UnauthorizedError } from "../../utils/errors.js";
 
 vi.mock("../../features/users/user.service.js", () => ({
   getUserById: vi.fn(),
@@ -58,10 +58,21 @@ describe("isAuthenticated middleware", () => {
       user: { userId: "user-404", role: "USER" },
     };
 
-    getUserById.mockRejectedValue(new Error("Usuario no encontrado"));
+    getUserById.mockRejectedValue(new NotFoundError("Usuario no encontrado"));
 
     await expect(isAuthenticated(request, {})).rejects.toThrow(
       UnauthorizedError,
     );
+  });
+
+  it("propaga errores internos no relacionados con auth", async () => {
+    const request = {
+      jwtVerify: vi.fn().mockResolvedValue(undefined),
+      user: { userId: "user-1", role: "USER" },
+    };
+
+    getUserById.mockRejectedValue(new Error("DB down"));
+
+    await expect(isAuthenticated(request, {})).rejects.toThrow("DB down");
   });
 });

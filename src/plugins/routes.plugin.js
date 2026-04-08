@@ -1,13 +1,13 @@
 import fp from "fastify-plugin";
-import authRoutes from "./src/features/auth/auth.routes.js";
-import storyRoutes from "./src/features/stories/story.routes.js";
-import chapterRoutes from "./src/features/chapters/chapter.routes.js";
-import userRoutes from "./src/features/users/user.routes.js";
-import favoriteRoutes from "./src/features/favorites/favorite.routes.js";
-import interactionRoutes from "./src/features/interactions/interaction.routes.js";
-import reportRoutes from "./src/features/reports/report.routes.js";
-import transactionRoutes from "./src/features/transactions/transaction.routes.js";
-import donationRoutes from "./src/features/donations/donation.routes.js";
+import authRoutes from "../features/auth/auth.routes.js";
+import storyRoutes from "../features/stories/story.routes.js";
+import chapterRoutes from "../features/chapters/chapter.routes.js";
+import userRoutes from "../features/users/user.routes.js";
+import favoriteRoutes from "../features/favorites/favorite.routes.js";
+import interactionRoutes from "../features/interactions/interaction.routes.js";
+import reportRoutes from "../features/reports/report.routes.js";
+import transactionRoutes from "../features/transactions/transaction.routes.js";
+import donationRoutes from "../features/donations/donation.routes.js";
 
 export default fp(async function routesPlugin(fastify) {
   // Health check endpoint
@@ -22,12 +22,13 @@ export default fp(async function routesPlugin(fastify) {
         database: "connected",
       };
     } catch (error) {
+      fastify.log.error({ err: error }, "Health check DB probe failed");
       reply.code(503);
       return {
         status: "error",
         timestamp: new Date().toISOString(),
         database: "disconnected",
-        error: error.message,
+        message: "Service unavailable",
       };
     }
   });

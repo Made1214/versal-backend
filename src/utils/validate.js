@@ -9,11 +9,12 @@
  * @returns {boolean} - true si es un UUID válido
  */
 function validateUUID(id) {
-  if (typeof id !== 'string') {
+  if (typeof id !== "string") {
     return false;
   }
   // Regex para UUID v4
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(id);
 }
 
@@ -31,8 +32,4 @@ function validateUrl(url) {
   }
 }
 
-export {
-  validateObjectId,
-  validateUUID,
-  validateUrl,
-};
+export { validateUUID, validateUrl };

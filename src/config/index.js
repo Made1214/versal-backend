@@ -113,6 +113,14 @@ const schema = {
     STRIPE_WEBHOOK_SECRET: {
       type: "string",
     },
+    STRIPE_CURRENCY: {
+      type: "string",
+      default: "usd",
+    },
+    FRONTEND_URL: {
+      type: "string",
+      default: "http://localhost:8080",
+    },
 
     // Seguridad
     RATE_LIMIT_MAX: {
