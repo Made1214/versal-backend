@@ -38,7 +38,7 @@ export default fp(async function routesPlugin(fastify) {
   fastify.register(userRoutes, { prefix: "/api/users" });
   fastify.register(favoriteRoutes, { prefix: "/api/favorites" });
   fastify.register(interactionRoutes, { prefix: "/api" });
-  fastify.register(reportRoutes, { prefix: "/api/reports" });
+  fastify.register(reportRoutes, { prefix: "/api" });
   fastify.register(transactionRoutes, { prefix: "/api" });
   fastify.register(donationRoutes, { prefix: "/api/donations" });
 });
