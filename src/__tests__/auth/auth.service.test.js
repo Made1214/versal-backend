@@ -1,27 +1,33 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import prisma from "../../config/prisma.js";
+import {
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "../../utils/errors.js";
 
 // Mock all dependencies BEFORE importing
-vi.mock('bcrypt', () => ({
+vi.mock("bcrypt", () => ({
   default: {
-    hash: vi.fn().mockResolvedValue('$2b$10$hashed'),
+    hash: vi.fn().mockResolvedValue("$2b$10$hashed"),
     compare: vi.fn().mockResolvedValue(true),
   },
 }));
 
-vi.mock('crypto', () => ({
+vi.mock("crypto", () => ({
   default: {
     createHash: vi.fn().mockReturnValue({
       update: vi.fn().mockReturnThis(),
-      digest: vi.fn().mockReturnValue('hashed-token'),
+      digest: vi.fn().mockReturnValue("hashed-token"),
     }),
     randomBytes: vi.fn().mockReturnValue({
-      toString: vi.fn().mockReturnValue('random-token-123'),
+      toString: vi.fn().mockReturnValue("random-token-123"),
     }),
   },
 }));
 
 // Mock Prisma - must be done before importing auth.service
-vi.mock('../../config/prisma.js', () => ({
+vi.mock("../../config/prisma.js", () => ({
   default: {
     user: {
       findUnique: vi.fn(),
@@ -42,7 +48,7 @@ vi.mock('../../config/prisma.js', () => ({
   },
 }));
 
-vi.mock('../../features/users/user.service.js', () => ({
+vi.mock("../../features/users/user.service.js", () => ({
   getUserByEmail: vi.fn(),
   registerUser: vi.fn(),
   loginUser: vi.fn(),
@@ -50,21 +56,132 @@ vi.mock('../../features/users/user.service.js', () => ({
 }));
 
 // Import after all mocks are set
-import * as authService from '../../features/auth/auth.service.js';
+import * as authService from "../../features/auth/auth.service.js";
 
-describe('auth.service', () => {
-  describe('isValidPassword', () => {
-    it('should return true for valid passwords', () => {
-      expect(authService.isValidPassword('Password123!')).toBe(true);
-      expect(authService.isValidPassword('MyP@ssw0rd')).toBe(true);
-      expect(authService.isValidPassword('Test1234#')).toBe(true);
+describe("auth.service", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  describe("saveRefreshToken", () => {
+    it("persists a hashed refresh token with expiry and user agent", async () => {
+      const expiresAt = new Date("2026-05-01T00:00:00.000Z");
+
+      await authService.saveRefreshToken({
+        token: "refresh-token",
+        userId: "user-123",
+        userAgent: "test-agent",
+        expiresAt,
+      });
+
+      expect(prisma.refreshToken.create).toHaveBeenCalledWith({
+        data: {
+          tokenHash: "hashed-token",
+          userId: "user-123",
+          userAgent: "test-agent",
+          expiresAt,
+        },
+      });
     });
 
-    it('should return false for invalid passwords', () => {
-      expect(authService.isValidPassword('password123')).toBe(false); // No uppercase
-      expect(authService.isValidPassword('PASSWORD123')).toBe(false); // No lowercase
-      expect(authService.isValidPassword('Password')).toBe(false); // No number or special char
-      expect(authService.isValidPassword('Pass123')).toBe(false); // Less than 8 chars
+    it("uses a default expiry when expiresAt is omitted", async () => {
+      await authService.saveRefreshToken({
+        token: "refresh-token",
+        userId: "user-123",
+      });
+
+      expect(prisma.refreshToken.create).toHaveBeenCalled();
+      const callData = prisma.refreshToken.create.mock.calls[0][0].data;
+      expect(callData.tokenHash).toBe("hashed-token");
+      expect(callData.userId).toBe("user-123");
+      expect(callData.userAgent).toBe("unknown");
+      expect(callData.expiresAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("verifyRefreshToken", () => {
+    it("returns session data when token exists and is valid", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        userId: "user-123",
+        revoked: false,
+        expiresAt: new Date(Date.now() + 10000),
+      });
+
+      const result = await authService.verifyRefreshToken("refresh-token");
+
+      expect(result.userId).toBe("user-123");
+      expect(result.token.revoked).toBe(false);
+    });
+
+    it("throws UnauthorizedError when refresh token is missing", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue(null);
+      await expect(
+        authService.verifyRefreshToken("refresh-token"),
+      ).rejects.toThrow(UnauthorizedError);
+    });
+
+    it("throws UnauthorizedError when refresh token is revoked", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        userId: "user-123",
+        revoked: true,
+        expiresAt: new Date(Date.now() + 10000),
+      });
+
+      await expect(
+        authService.verifyRefreshToken("refresh-token"),
+      ).rejects.toThrow(UnauthorizedError);
+    });
+
+    it("throws UnauthorizedError when refresh token is expired", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        userId: "user-123",
+        revoked: false,
+        expiresAt: new Date(Date.now() - 10000),
+      });
+
+      await expect(
+        authService.verifyRefreshToken("refresh-token"),
+      ).rejects.toThrow(UnauthorizedError);
+    });
+  });
+
+  describe("revokeRefreshToken", () => {
+    it("revokes an existing refresh token", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        userId: "user-123",
+        revoked: false,
+        expiresAt: new Date(Date.now() + 10000),
+      });
+
+      await authService.revokeRefreshToken("refresh-token");
+
+      expect(prisma.refreshToken.update).toHaveBeenCalledWith({
+        where: { tokenHash: "hashed-token" },
+        data: {
+          revoked: true,
+          revokedAt: expect.any(Date),
+        },
+      });
+    });
+
+    it("throws NotFoundError when refresh token does not exist", async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue(null);
+      await expect(
+        authService.revokeRefreshToken("refresh-token"),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("isValidPassword", () => {
+    it("should return true for valid passwords", () => {
+      expect(authService.isValidPassword("Password123!")).toBe(true);
+      expect(authService.isValidPassword("MyP@ssw0rd")).toBe(true);
+      expect(authService.isValidPassword("Test1234#")).toBe(true);
+    });
+
+    it("should return false for invalid passwords", () => {
+      expect(authService.isValidPassword("password123")).toBe(false); // No uppercase
+      expect(authService.isValidPassword("PASSWORD123")).toBe(false); // No lowercase
+      expect(authService.isValidPassword("Password")).toBe(false); // No number or special char
+      expect(authService.isValidPassword("Pass123")).toBe(false); // Less than 8 chars
     });
   });
 });

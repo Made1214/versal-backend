@@ -3,6 +3,40 @@ import * as userService from "../users/user.service.js";
 import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60;
+const REFRESH_TOKEN_EXPIRY = "30d";
+const ACCESS_TOKEN_EXPIRY = "15m";
+
+function setRefreshCookie(reply, refreshToken) {
+  return reply.setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+  });
+}
+
+async function createAuthSession({ request, reply, user }) {
+  const payload = { userId: user.id, role: user.role };
+  const accessToken = request.jwtSign(payload, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshToken = request.jwtSign(payload, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
+
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE * 1000);
+  await authService.saveRefreshToken({
+    token: refreshToken,
+    userId: user.id,
+    userAgent: request.headers["user-agent"] || "unknown",
+    expiresAt,
+  });
+
+  setRefreshCookie(reply, refreshToken);
+  return accessToken;
+}
 
 async function register(request, reply) {
   const { email, password, username, fullName } = request.body;
@@ -14,50 +48,18 @@ async function register(request, reply) {
     fullName,
   });
 
-  const payload = { userId: user.id, role: user.role };
+  const accessToken = await createAuthSession({ request, reply, user });
 
-  const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
-  const refreshToken = request.jwtSign(payload, { expiresIn: "30d" });
-
-  reply
-    .setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 30 * 24 * 60 * 60,
-    })
-    .code(201)
-    .send({ user, accessToken });
+  return reply.code(201).send({ user, accessToken });
 }
 
 async function login(request, reply) {
   const { email, password } = request.body;
 
   const user = await authService.loginUser({ email, password });
+  const accessToken = await createAuthSession({ request, reply, user });
 
-  const payload = { userId: user.id, role: user.role };
-
-  const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
-  const refreshToken = request.jwtSign(payload, { expiresIn: "30d" });
-
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  await authService.saveRefreshToken({
-    token: refreshToken,
-    userId: user.id,
-    userAgent: request.headers["user-agent"] || "unknown",
-    expiresAt,
-  });
-
-  reply
-    .setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 30 * 24 * 60 * 60,
-    })
-    .send({ user, accessToken });
+  return reply.send({ user, accessToken });
 }
 
 async function oauthGoogleCallback(request, reply) {
@@ -87,28 +89,8 @@ async function oauthGoogleCallback(request, reply) {
     oauthId: profile.sub,
   });
 
-  const payload = { userId: user.id, role: user.role };
-
-  const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
-  const refreshToken = request.jwtSign(payload, { expiresIn: "30d" });
-
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  await authService.saveRefreshToken({
-    token: refreshToken,
-    userId: user.id,
-    userAgent: request.headers["user-agent"] || "unknown",
-    expiresAt,
-  });
-
-  reply
-    .setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 30 * 24 * 60 * 60,
-    })
-    .send({ user, accessToken });
+  const accessToken = await createAuthSession({ request, reply, user });
+  return reply.send({ user, accessToken });
 }
 
 async function refreshToken(request, reply) {

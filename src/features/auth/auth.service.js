@@ -72,13 +72,20 @@ function hashToken(token) {
 }
 
 // Guarda un refreshToken en base de datos.
-async function saveRefreshToken({ token, userId, userAgent, expiresAt }) {
+async function saveRefreshToken({
+  token,
+  userId,
+  userAgent = "unknown",
+  expiresAt,
+}) {
   const tokenHash = hashToken(token);
+  const defaultExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
   await authRepo.createRefreshToken({
     tokenHash,
     userId,
     userAgent,
-    expiresAt,
+    expiresAt: expiresAt || defaultExpiresAt,
   });
 }
 
