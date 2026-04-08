@@ -50,8 +50,8 @@ async function updateUser({ userId, data }) {
   return updatedUser;
 }
 
-// Cambiar contraseña
-async function changePassword({ userId, oldPassword, newPassword }) {
+// Actualizar contraseña de forma segura.
+async function setPassword({ userId, newPassword }) {
   if (!isValidPassword(newPassword)) {
     throw new ValidationError(
       "La nueva contraseña no cumple con los requisitos.",
@@ -61,13 +61,21 @@ async function changePassword({ userId, oldPassword, newPassword }) {
   const user = await userRepo.findById(userId);
   if (!user) throw new NotFoundError("Usuario no encontrado");
 
-  const isValid = await bcrypt.compare(oldPassword, user.password);
-  if (!isValid) throw new ValidationError("Contraseña antigua incorrecta");
-
   const hash = await bcrypt.hash(newPassword, 10);
   await userRepo.update(userId, { password: hash });
 
   return { message: "Contraseña actualizada correctamente" };
+}
+
+// Cambiar contraseña
+async function changePassword({ userId, oldPassword, newPassword }) {
+  const user = await userRepo.findById(userId);
+  if (!user) throw new NotFoundError("Usuario no encontrado");
+
+  const isValid = await bcrypt.compare(oldPassword, user.password);
+  if (!isValid) throw new ValidationError("Contraseña antigua incorrecta");
+
+  return await setPassword({ userId, newPassword });
 }
 
 // Ver seguidores
@@ -173,6 +181,7 @@ export {
   getUserByEmail,
   getUserById,
   updateUser,
+  setPassword,
   changePassword,
   getFollowers,
   getFollowing,

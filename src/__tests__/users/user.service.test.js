@@ -159,6 +159,35 @@ describe("User Service", () => {
     });
   });
 
+  describe("setPassword", () => {
+    it("actualiza contraseña con hash", async () => {
+      userRepo.findById.mockResolvedValue(mockUser);
+      bcrypt.hash.mockResolvedValue("$2b$10$newHash");
+      userRepo.update.mockResolvedValue(mockUser);
+
+      const result = await userService.setPassword({
+        userId: "user-123",
+        newPassword: "NewPass1!",
+      });
+
+      expect(userRepo.update).toHaveBeenCalledWith("user-123", {
+        password: "$2b$10$newHash",
+      });
+      expect(result.message).toContain("actualizada");
+    });
+
+    it("lanza error si usuario no existe", async () => {
+      userRepo.findById.mockResolvedValue(null);
+
+      await expect(
+        userService.setPassword({
+          userId: "no-existe",
+          newPassword: "NewPass1!",
+        }),
+      ).rejects.toThrow("Usuario no encontrado");
+    });
+  });
+
   describe("followUser", () => {
     it("sigue usuario correctamente", async () => {
       userRepo.findById.mockResolvedValue(mockUser);

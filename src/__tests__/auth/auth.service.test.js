@@ -50,6 +50,7 @@ vi.mock("../../config/prisma.js", () => ({
 
 vi.mock("../../features/users/user.service.js", () => ({
   getUserByEmail: vi.fn(),
+  setPassword: vi.fn(),
   registerUser: vi.fn(),
   loginUser: vi.fn(),
   findOrCreateOAuthUser: vi.fn(),
@@ -214,6 +215,48 @@ describe("auth.service", () => {
       } finally {
         process.env.NODE_ENV = originalEnv;
       }
+    });
+  });
+
+  describe("resetPassword", () => {
+    it("updates user password through userService and marks token as used", async () => {
+      userService.getUserByEmail.mockResolvedValue({ id: "user-123" });
+      userService.setPassword.mockResolvedValue({
+        message: "Contraseña actualizada correctamente",
+      });
+      prisma.passwordReset.findFirst.mockResolvedValue({ id: "reset-1" });
+      prisma.passwordReset.update.mockResolvedValue({ id: "reset-1" });
+
+      const result = await authService.resetPassword({
+        email: "test@example.com",
+        token: "random-token-123",
+        newPassword: "ValidPass1!",
+      });
+
+      expect(userService.setPassword).toHaveBeenCalledWith({
+        userId: "user-123",
+        newPassword: "ValidPass1!",
+      });
+      expect(prisma.passwordReset.update).toHaveBeenCalledWith({
+        where: { id: "reset-1" },
+        data: { usedAt: expect.any(Date) },
+      });
+      expect(result).toEqual({
+        message: "Contraseña restablecida correctamente.",
+      });
+    });
+
+    it("throws ValidationError when reset token is invalid", async () => {
+      userService.getUserByEmail.mockResolvedValue({ id: "user-123" });
+      prisma.passwordReset.findFirst.mockResolvedValue(null);
+
+      await expect(
+        authService.resetPassword({
+          email: "test@example.com",
+          token: "bad-token",
+          newPassword: "ValidPass1!",
+        }),
+      ).rejects.toThrow(ValidationError);
     });
   });
 

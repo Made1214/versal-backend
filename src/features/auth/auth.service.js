@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import bcrypt from "bcrypt";
 import * as userService from "../users/user.service.js";
 import * as authRepo from "../../repositories/auth.repository.js";
 import {
@@ -172,11 +171,7 @@ async function resetPassword({ email, token, newPassword }) {
     );
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await userService.updateUser({
-    userId: user.id,
-    data: { password: hashedPassword },
-  });
+  await userService.setPassword({ userId: user.id, newPassword });
 
   await authRepo.updatePasswordReset(resetEntry.id, { usedAt: new Date() });
 
