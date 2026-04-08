@@ -1,9 +1,42 @@
+import fs from "fs";
+import dotenv from "dotenv";
 import envSchema from "env-schema";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 /**
  * Configuración centralizada con validación de variables de entorno
  * Se ejecuta al arrancar la aplicación para validar que todas las variables necesarias existan
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, "..", "..");
+
+function resolveEnvFilename(nodeEnv) {
+  const normalized = nodeEnv?.toLowerCase?.() || "development";
+  const candidates = [
+    `.env.${normalized}`,
+    `.env.${normalized.slice(0, 3)}`,
+    ".env",
+  ];
+
+  for (const candidate of candidates) {
+    const candidatePath = join(rootDir, candidate);
+    if (fs.existsSync(candidatePath)) {
+      return candidatePath;
+    }
+  }
+
+  return join(rootDir, ".env");
+}
+
+const envFilePath = resolveEnvFilename(process.env.NODE_ENV);
+const result = dotenv.config({ path: envFilePath });
+
+if (result.error && result.error.code !== "ENOENT") {
+  throw result.error;
+}
 
 const schema = {
   type: "object",
@@ -48,6 +81,10 @@ const schema = {
     // Base de datos
     DATABASE_URL: {
       type: "string",
+    },
+    PRISMA_LOG_QUERIES: {
+      type: "boolean",
+      default: false,
     },
 
     CORS_ORIGINS: {
@@ -103,7 +140,7 @@ const schema = {
 // Validar y exportar configuración
 const config = envSchema({
   schema,
-  dotenv: true,
+  dotenv: false,
 });
 
 // Procesar arrays desde strings

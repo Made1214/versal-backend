@@ -5,7 +5,11 @@
  */
 
 import prisma from "../config/prisma.js";
-import { NotFoundError, ValidationError, ConflictError } from "../utils/errors.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+} from "../utils/errors.js";
 
 /**
  * Crear una nueva etiqueta
@@ -168,7 +172,9 @@ export async function deleteTag(tagId) {
   });
 
   if (storyCount > 0) {
-    throw new ValidationError("No se puede eliminar una etiqueta con historias asociadas");
+    throw new ValidationError(
+      "No se puede eliminar una etiqueta con historias asociadas",
+    );
   }
 
   return await prisma.tag.delete({
@@ -245,15 +251,11 @@ export async function seedDefaultTags() {
     "Superhéroes",
   ];
 
-  try {
-    for (const name of defaultTags) {
-      await prisma.tag.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-      });
-    }
-  } catch (error) {
-    console.error("Error al sembrar etiquetas por defecto:", error);
+  for (const name of defaultTags) {
+    await prisma.tag.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
   }
 }

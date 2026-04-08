@@ -1,5 +1,6 @@
 import config from "../config/index.js";
 import { v2 as cloudinary } from "cloudinary";
+import { ValidationError } from "./errors.js";
 
 // Configura Cloudinary con las variables de entorno
 cloudinary.config({
@@ -47,7 +48,7 @@ export async function uploadFromMultiPartFile(
   if (file.file && typeof file.file.pipe === "function") {
     file.file.pipe(uploadStream);
   } else {
-    throw new Error("El archivo no es válido o no se pudo procesar.");
+    throw new ValidationError("El archivo no es válido o no se pudo procesar.");
   }
 
   const result = await resultPromise;
@@ -73,7 +74,7 @@ export async function uploadChapterVideo(file) {
 
 export async function deleteImage(publicId, resourceType = "image") {
   if (!publicId) {
-    throw new Error("Public ID is required to delete an image.");
+    throw new ValidationError("Public ID is required to delete an image.");
   }
 
   return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });

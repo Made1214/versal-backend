@@ -43,12 +43,33 @@
    - Archivos:
      - src/features/auth/auth.controller.js
      - src/features/auth/auth.service.js
+4. [ ] P2.7 Corregir persistencia de refresh token en registro y cubrir flows de refresh/revocation.
 
-### Fase 3.7 - Nice to Have
+- Archivos:
+  - src/features/auth/auth.controller.js
+  - src/features/auth/auth.service.js
+  - src/repositories/auth.repository.js
+  - src/**tests**/auth/auth.service.test.js
+  - src/**tests**/auth/auth.integration.test.js
 
-1. [x] Transacciones Prisma para operaciones criticas.
-1. [x] Tests unitarios/integracion completos en modulos pendientes.
-1. [ ] Inyeccion de dependencias.
+5. [ ] P2.8 Evitar exponer token de password reset en respuestas de producción.
+
+- Archivos:
+  - src/features/auth/auth.service.js
+
+6. [x] P2.9 Remover logging residual de Prisma y repositorios de seed.
+
+- Archivos:
+  - src/config/prisma.js
+  - src/repositories/category.repository.js
+  - src/repositories/tag.repository.js
+
+7. [x] P2.10 Consistencia en manejo de errores con clases tipadas (sin throw new Error en flujo funcional).
+
+- Archivos:
+  - src/features/chapters/chapter.controller.js
+  - src/utils/cloudinary.js
+
 1. [ ] Caching con Redis (opcional).
 1. [ ] GraphQL API (opcional).
 

@@ -5,7 +5,11 @@
  */
 
 import prisma from "../config/prisma.js";
-import { NotFoundError, ValidationError, ConflictError } from "../utils/errors.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+} from "../utils/errors.js";
 
 /**
  * Crear una nueva categoría
@@ -94,7 +98,9 @@ export async function getAllCategories(pagination = {}) {
       orderBy: { name: "asc" },
       include: {
         _count: {
-          select: { stories: { where: { isDeleted: false, status: "PUBLISHED" } } },
+          select: {
+            stories: { where: { isDeleted: false, status: "PUBLISHED" } },
+          },
         },
       },
     }),
@@ -168,7 +174,9 @@ export async function deleteCategory(categoryId) {
   });
 
   if (storyCount > 0) {
-    throw new ValidationError("No se puede eliminar una categoría con historias asociadas");
+    throw new ValidationError(
+      "No se puede eliminar una categoría con historias asociadas",
+    );
   }
 
   return await prisma.category.delete({
@@ -192,15 +200,11 @@ export async function seedDefaultCategories() {
     "Juvenil",
   ];
 
-  try {
-    for (const name of defaultCategories) {
-      await prisma.category.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-      });
-    }
-  } catch (error) {
-    console.error("Error al sembrar categorías por defecto:", error);
+  for (const name of defaultCategories) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
   }
 }

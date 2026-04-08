@@ -1,4 +1,5 @@
 import * as chapterService from "./chapter.service.js";
+import { ForbiddenError } from "../../utils/errors.js";
 
 // Controlador para crear un nuevo capítulo
 async function createChapter(request, reply) {
@@ -40,7 +41,7 @@ async function updateChapter(request, reply) {
   // Verificación de permisos
   const chapter = await chapterService.getChapterById(id);
   if (chapter.story.authorId !== userId) {
-    throw new Error("No tienes permiso para editar este capítulo.");
+    throw new ForbiddenError("No tienes permiso para editar este capítulo.");
   }
 
   const result = await chapterService.updateChapter(id, request.body);
@@ -54,7 +55,7 @@ async function deleteChapter(request, reply) {
 
   const chapter = await chapterService.getChapterById(id);
   if (chapter.story.authorId !== userId) {
-    throw new Error("No tienes permiso para eliminar este capítulo.");
+    throw new ForbiddenError("No tienes permiso para eliminar este capítulo.");
   }
 
   const result = await chapterService.deleteChapter(id);

@@ -5,13 +5,16 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "dev": "node --watch app.js",
+    "dev": "cross-env NODE_ENV=development node --watch app.js",
+    "start": "cross-env NODE_ENV=production node app.js",
+    "dev:production": "cross-env NODE_ENV=production node --watch app.js",
+    "dev:test": "cross-env NODE_ENV=test node --watch app.js",
     "db:create": "node scripts/create_postgres_db.js",
     "db:migrate": "npx prisma migrate dev --name init",
     "prisma:generate": "npx prisma generate",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test": "cross-env NODE_ENV=test vitest run",
+    "test:watch": "cross-env NODE_ENV=test vitest",
+    "test:ui": "cross-env NODE_ENV=test vitest --ui"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "@vitest/ui": "^4.1.2",
+    "cross-env": "^7.0.3",
     "fastify-plugin": "^5.0.1",
     "prisma": "^6.19.2",
     "vitest": "^4.1.2"
