@@ -13,3 +13,15 @@ coverage
 *.log
 .env
 .env.*
+
+# Project metadata and docs not needed at image build time
+.github
+.agents
+docs
+README.md
+skills-lock.json
+
+# Test and local tooling artifacts
+src/__tests__
+vitest.config.js
+scripts
