@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
 import * as userRepo from "../../repositories/user.repository.js";
-import { 
-  NotFoundError, 
-  ValidationError, 
+import {
+  NotFoundError,
+  ValidationError,
   ConflictError,
 } from "../../utils/errors.js";
+import { normalizeRole } from "../../utils/roles.js";
 
 // Validación de contraseña
 function isValidPassword(password) {
@@ -52,7 +53,9 @@ async function updateUser({ userId, data }) {
 // Cambiar contraseña
 async function changePassword({ userId, oldPassword, newPassword }) {
   if (!isValidPassword(newPassword)) {
-    throw new ValidationError("La nueva contraseña no cumple con los requisitos.");
+    throw new ValidationError(
+      "La nueva contraseña no cumple con los requisitos.",
+    );
   }
 
   const user = await userRepo.findById(userId);
@@ -156,11 +159,12 @@ async function deleteUser({ userId, hardDelete = false }) {
 }
 
 async function updateUserRole({ userId, role }) {
-  if (!["user", "admin"].includes(role)) {
+  const normalizedRole = normalizeRole(role);
+  if (!normalizedRole) {
     throw new ValidationError("Rol inválido");
   }
 
-  return await userRepo.update(userId, { role });
+  return await userRepo.update(userId, { role: normalizedRole });
 }
 
 export {

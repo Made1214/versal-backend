@@ -1,6 +1,7 @@
 import * as authService from "./auth.service.js";
 import * as userService from "../users/user.service.js";
 import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
+import { normalizeRole } from "../../utils/roles.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 const REFRESH_TOKEN_MAX_AGE = 15 * 24 * 60 * 60;
@@ -18,7 +19,12 @@ function setRefreshCookie(reply, refreshToken) {
 }
 
 async function createAuthSession({ request, reply, user }) {
-  const payload = { userId: user.id, role: user.role };
+  const role = normalizeRole(user.role);
+  if (!role) {
+    throw new UnauthorizedError("Usuario con rol inválido.");
+  }
+
+  const payload = { userId: user.id, role };
   const accessToken = request.jwtSign(payload, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
@@ -112,7 +118,14 @@ async function refreshToken(request, reply) {
     throw new UnauthorizedError("Refresh token inválido.");
   }
 
-  const payload = { userId: decoded.userId, role: decoded.role };
+  const role = normalizeRole(decoded.role);
+  if (!role) {
+    throw new UnauthorizedError("Refresh token inválido.");
+  }
+
+  await userService.getUserById({ userId: decoded.userId });
+
+  const payload = { userId: decoded.userId, role };
   const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
 
   return reply.send({ accessToken });

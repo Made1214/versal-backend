@@ -1,5 +1,6 @@
 import * as storyService from "./story.service.js";
 import { deleteImage, uploadCover } from "../../utils/cloudinary.js";
+import { isAdminRole } from "../../utils/roles.js";
 
 // Controlador para crear una nueva historia
 async function createStory(request, reply) {
@@ -117,7 +118,7 @@ async function deleteStory(request, reply) {
 
   const isAuthor = existingStory.authorId === userId;
 
-  if (!isAuthor && role !== "admin") {
+  if (!isAuthor && !isAdminRole(role)) {
     return reply
       .code(403)
       .send({ error: "No tienes permiso para eliminar esta historia." });

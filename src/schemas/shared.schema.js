@@ -15,7 +15,7 @@ export const userBase = {
     username: { type: "string" },
     email: { type: "string", format: "email" },
     profileImage: { type: "string", format: "uri", nullable: true },
-    role: { type: "string", enum: ["user", "admin"] },
+    role: { type: "string", enum: ["USER", "ADMIN"] },
     bio: { type: "string", nullable: true },
     isDeleted: { type: "boolean", default: false },
     deletedAt: { type: "string", format: "date-time", nullable: true },
@@ -100,7 +100,10 @@ export const tagProperties = {
 export const authorIdParam = {
   type: "object",
   properties: {
-    authorId: { type: "string", description: "ID del autor cuyas historias se desean obtener" },
+    authorId: {
+      type: "string",
+      description: "ID del autor cuyas historias se desean obtener",
+    },
   },
   required: ["authorId"],
 };

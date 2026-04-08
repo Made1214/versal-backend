@@ -26,7 +26,7 @@ const updateRoleSchema = {
   type: "object",
   required: ["role"],
   properties: {
-    role: { type: "string", enum: ["user", "admin"] },
+    role: { type: "string", enum: ["user", "admin", "USER", "ADMIN"] },
   },
   additionalProperties: false,
 };
