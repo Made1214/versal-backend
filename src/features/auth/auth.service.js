@@ -79,7 +79,7 @@ async function saveRefreshToken({
   expiresAt,
 }) {
   const tokenHash = hashToken(token);
-  const defaultExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const defaultExpiresAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
 
   await authRepo.createRefreshToken({
     tokenHash,
@@ -135,12 +135,15 @@ async function requestPasswordReset({ email }) {
     expiresAt,
   });
 
-  // TODO: enviar email real; por ahora devolvemos token para testing.
-
-  return {
+  const response = {
     message: "Reset password token generated. Revisa tu email.",
-    token,
   };
+
+  if (process.env.NODE_ENV !== "production") {
+    response.token = token;
+  }
+
+  return response;
 }
 
 async function resetPassword({ email, token, newPassword }) {

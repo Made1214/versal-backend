@@ -1,13 +1,13 @@
 # Estado Operativo - Versal Backend
 
-> Ultima actualizacion: 07/04/2026
+> Ultima actualizacion: 08/04/2026
 > Objetivo de este archivo: tablero corto para ejecucion diaria (sin historial largo).
 
 ## Estado Actual
 
 - Backend: Fastify + Prisma + PostgreSQL.
 - Enfoque activo: hardening con fastify-best-practices.
-- Tests reportados (ultimo registro): 181 pasando, 0 suites fallando.
+- Tests reportados (ultimo registro): 192 pasando, 0 suites fallando.
 
 ## Resumen Reciente
 
@@ -43,7 +43,7 @@
    - Archivos:
      - src/features/auth/auth.controller.js
      - src/features/auth/auth.service.js
-4. [ ] P2.7 Corregir persistencia de refresh token en registro y cubrir flows de refresh/revocation.
+4. [x] P2.7 Corregir persistencia de refresh token en registro y cubrir flows de refresh/revocation.
 
 - Archivos:
   - src/features/auth/auth.controller.js
@@ -52,7 +52,7 @@
   - src/**tests**/auth/auth.service.test.js
   - src/**tests**/auth/auth.integration.test.js
 
-5. [ ] P2.8 Evitar exponer token de password reset en respuestas de producción.
+5. [x] P2.8 Evitar exponer token de password reset en respuestas de producción.
 
 - Archivos:
   - src/features/auth/auth.service.js

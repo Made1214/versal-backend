@@ -75,7 +75,7 @@ const schema = {
     },
     REFRESH_TOKEN_EXPIRES_IN: {
       type: "string",
-      default: "30d",
+      default: "15d",
     },
 
     // Base de datos

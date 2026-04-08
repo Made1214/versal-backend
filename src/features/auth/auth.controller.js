@@ -3,8 +3,8 @@ import * as userService from "../users/user.service.js";
 import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60;
-const REFRESH_TOKEN_EXPIRY = "30d";
+const REFRESH_TOKEN_MAX_AGE = 15 * 24 * 60 * 60;
+const REFRESH_TOKEN_EXPIRY = "15d";
 const ACCESS_TOKEN_EXPIRY = "15m";
 
 function setRefreshCookie(reply, refreshToken) {
@@ -143,9 +143,6 @@ async function forgotPassword(request, reply) {
   const { email } = request.body;
 
   const result = await authService.requestPasswordReset({ email });
-
-  // TODO
-  // en producción no devolver token en respuesta
   return reply.code(200).send({ message: result.message });
 }
 

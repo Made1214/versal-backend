@@ -57,14 +57,14 @@ describe("Auth Controller", () => {
     await authController.register(request, reply);
 
     expect(authService.saveRefreshToken).toHaveBeenCalledWith({
-      token: "user-123-30d",
+      token: "user-123-15d",
       userId: "user-123",
       userAgent: "test-agent",
       expiresAt: expect.any(Date),
     });
     expect(reply.setCookie).toHaveBeenCalledWith(
       "refreshToken",
-      "user-123-30d",
+      "user-123-15d",
       expect.any(Object),
     );
     expect(reply.code).toHaveBeenCalledWith(201);

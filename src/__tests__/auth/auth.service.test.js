@@ -57,6 +57,7 @@ vi.mock("../../features/users/user.service.js", () => ({
 
 // Import after all mocks are set
 import * as authService from "../../features/auth/auth.service.js";
+import * as userService from "../../features/users/user.service.js";
 
 describe("auth.service", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -167,6 +168,52 @@ describe("auth.service", () => {
       await expect(
         authService.revokeRefreshToken("refresh-token"),
       ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("requestPasswordReset", () => {
+    it("returns the token in non-production environments", async () => {
+      userService.getUserByEmail.mockResolvedValue({ id: "user-123" });
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "test";
+
+      try {
+        const result = await authService.requestPasswordReset({
+          email: "test@example.com",
+        });
+
+        expect(prisma.passwordReset.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            userId: "user-123",
+            tokenHash: "hashed-token",
+            expiresAt: expect.any(Date),
+          }),
+        });
+        expect(result).toEqual({
+          message: "Reset password token generated. Revisa tu email.",
+          token: "random-token-123",
+        });
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
+    it("does not return the token in production responses", async () => {
+      userService.getUserByEmail.mockResolvedValue({ id: "user-123" });
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
+
+      try {
+        const result = await authService.requestPasswordReset({
+          email: "test@example.com",
+        });
+
+        expect(result).toEqual({
+          message: "Reset password token generated. Revisa tu email.",
+        });
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
     });
   });
 
