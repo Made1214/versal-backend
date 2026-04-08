@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import envSchema from "env-schema";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { ValidationError } from "../utils/errors.js";
 
 /**
  * Configuración centralizada con validación de variables de entorno
@@ -157,7 +158,7 @@ if (
   (config.STRIPE_SECRET_KEY && !config.STRIPE_WEBHOOK_SECRET) ||
   (!config.STRIPE_SECRET_KEY && config.STRIPE_WEBHOOK_SECRET)
 ) {
-  throw new Error(
+  throw new ValidationError(
     "STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET deben estar ambas configuradas o ambas ausentes",
   );
 }
@@ -169,7 +170,7 @@ if (
   (!config.CLOUDINARY_CLOUD_NAME &&
     (config.CLOUDINARY_API_KEY || config.CLOUDINARY_API_SECRET))
 ) {
-  throw new Error(
+  throw new ValidationError(
     "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET deben estar todas configuradas o todas ausentes",
   );
 }
@@ -181,7 +182,7 @@ if (
   (!config.GOOGLE_CLIENT_ID &&
     (config.GOOGLE_CLIENT_SECRET || config.GOOGLE_OAUTH_CALLBACK_URL))
 ) {
-  throw new Error(
+  throw new ValidationError(
     "GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y GOOGLE_OAUTH_CALLBACK_URL deben estar todas configuradas o todas ausentes",
   );
 }

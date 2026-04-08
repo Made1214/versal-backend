@@ -1,6 +1,7 @@
 import * as storyService from "./story.service.js";
 import { deleteImage, uploadCover } from "../../utils/cloudinary.js";
 import { isAdminRole } from "../../utils/roles.js";
+import { ForbiddenError, ValidationError } from "../../utils/errors.js";
 
 // Controlador para crear una nueva historia
 async function createStory(request, reply) {
@@ -23,9 +24,7 @@ async function createStory(request, reply) {
   }
 
   if (!data.coverImage) {
-    return reply
-      .code(400)
-      .send({ error: "La imagen de portada es requerida." });
+    throw new ValidationError("La imagen de portada es requerida.");
   }
 
   const story = await storyService.createStory(data);
@@ -67,9 +66,7 @@ async function updateStory(request, reply) {
 
   const existingStory = await storyService.getStoryById(id);
   if (existingStory.authorId !== userId) {
-    return reply
-      .code(403)
-      .send({ error: "No tienes permiso para editar esta historia." });
+    throw new ForbiddenError("No tienes permiso para editar esta historia.");
   }
 
   const data = {};
@@ -119,9 +116,7 @@ async function deleteStory(request, reply) {
   const isAuthor = existingStory.authorId === userId;
 
   if (!isAuthor && !isAdminRole(role)) {
-    return reply
-      .code(403)
-      .send({ error: "No tienes permiso para eliminar esta historia." });
+    throw new ForbiddenError("No tienes permiso para eliminar esta historia.");
   }
 
   if (existingStory.coverImagePublicId) {

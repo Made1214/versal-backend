@@ -1,11 +1,7 @@
 import * as authService from "./auth.service.js";
 import * as userService from "../users/user.service.js";
 import config from "../../config/index.js";
-import {
-  NotFoundError,
-  UnauthorizedError,
-  ValidationError,
-} from "../../utils/errors.js";
+import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
 import { normalizeRole } from "../../utils/roles.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
@@ -112,29 +108,7 @@ async function oauthGoogleCallback(request, reply) {
     );
   }
 
-  let profile;
-  try {
-    const userInfoResp = await fetch(
-      "https://www.googleapis.com/oauth2/v3/userinfo",
-      {
-        headers: { Authorization: `Bearer ${access_token}` },
-      },
-    );
-
-    if (!userInfoResp.ok) {
-      throw new ValidationError("No se pudo obtener el perfil de Google.");
-    }
-
-    profile = await userInfoResp.json();
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-
-    throw new ValidationError(
-      "Error al consultar la información del usuario en Google.",
-    );
-  }
+  const profile = await authService.getGoogleProfile(access_token);
 
   if (!profile.email) {
     throw new ValidationError("No se obtuvo email de Google");
@@ -160,12 +134,10 @@ async function refreshToken(request, reply) {
 
   await authService.verifyRefreshToken(token);
 
-  let decoded;
-  try {
-    decoded = request.server.jwt.verify(token);
-  } catch {
-    throw new UnauthorizedError("Refresh token inválido o expirado.");
-  }
+  const decoded = authService.decodeRefreshToken(
+    token,
+    request.server.jwt.verify.bind(request.server.jwt),
+  );
 
   if (!decoded?.userId || !decoded?.role) {
     throw new UnauthorizedError("Refresh token inválido.");
@@ -189,13 +161,7 @@ async function refreshToken(request, reply) {
 async function logout(request, reply) {
   const refreshToken = request.cookies[REFRESH_TOKEN_COOKIE_NAME];
   if (refreshToken) {
-    try {
-      await authService.revokeRefreshToken(refreshToken);
-    } catch (error) {
-      if (!(error instanceof NotFoundError)) {
-        throw error;
-      }
-    }
+    await authService.revokeRefreshTokenIfExists(refreshToken);
   }
 
   reply

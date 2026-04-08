@@ -136,6 +136,7 @@ Resetea la contraseña con el token recibido.
 Inicia el flujo de autenticación con Google OAuth.
 
 **Nota:** Endpoint disponible solo si el servidor tiene configuradas las variables de entorno de Google OAuth.
+Este endpoint lo expone el plugin `@fastify/oauth2` mediante `startRedirectPath`.
 
 ### GET /auth/oauth/google/callback
 

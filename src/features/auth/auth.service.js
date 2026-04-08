@@ -65,6 +65,40 @@ async function findOrCreateOAuthUser({
 
   return result.user;
 }
+
+async function getGoogleProfile(accessToken) {
+  const userInfoResp = await fetch(
+    "https://www.googleapis.com/oauth2/v3/userinfo",
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  if (!userInfoResp.ok) {
+    throw new ValidationError("No se pudo obtener el perfil de Google.");
+  }
+
+  return userInfoResp.json();
+}
+
+function decodeRefreshToken(token, verifyFn) {
+  try {
+    return verifyFn(token);
+  } catch {
+    throw new UnauthorizedError("Refresh token inválido o expirado.");
+  }
+}
+
+async function revokeRefreshTokenIfExists(token) {
+  try {
+    await revokeRefreshToken(token);
+  } catch (error) {
+    if (!(error instanceof NotFoundError)) {
+      throw error;
+    }
+  }
+}
+
 // Genera hash de refresh token para almacenamiento seguro.
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -197,4 +231,7 @@ export {
   resetPassword,
   isValidPassword,
   findOrCreateOAuthUser,
+  getGoogleProfile,
+  decodeRefreshToken,
+  revokeRefreshTokenIfExists,
 };

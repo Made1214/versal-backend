@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NotFoundError, ValidationError } from "../../utils/errors.js";
+import { ValidationError } from "../../utils/errors.js";
 
 vi.mock("../../features/auth/auth.service.js", () => ({
   registerUser: vi.fn(),
@@ -7,13 +7,21 @@ vi.mock("../../features/auth/auth.service.js", () => ({
   loginUser: vi.fn(),
   verifyRefreshToken: vi.fn(),
   revokeRefreshToken: vi.fn(),
+  revokeRefreshTokenIfExists: vi.fn(),
+  decodeRefreshToken: vi.fn(),
+  getGoogleProfile: vi.fn(),
   requestPasswordReset: vi.fn(),
   resetPassword: vi.fn(),
   findOrCreateOAuthUser: vi.fn(),
 }));
 
+vi.mock("../../features/users/user.service.js", () => ({
+  getUserById: vi.fn(),
+}));
+
 import * as authController from "../../features/auth/auth.controller.js";
 import * as authService from "../../features/auth/auth.service.js";
+import * as userService from "../../features/users/user.service.js";
 
 describe("Auth Controller", () => {
   let request;
@@ -113,17 +121,82 @@ describe("Auth Controller", () => {
 
   it("logout should ignore missing refresh token record and clear cookie", async () => {
     request.cookies = { refreshToken: "missing-token" };
-    authService.revokeRefreshToken.mockRejectedValue(
-      new NotFoundError("Refresh token inválido para revocación."),
-    );
+    authService.revokeRefreshTokenIfExists.mockResolvedValue({ success: true });
 
     await authController.logout(request, reply);
 
+    expect(authService.revokeRefreshTokenIfExists).toHaveBeenCalledWith(
+      "missing-token",
+    );
     expect(reply.clearCookie).toHaveBeenCalledWith("refreshToken", {
       path: "/",
     });
     expect(reply.send).toHaveBeenCalledWith({
       message: "Sesión cerrada exitosamente",
+    });
+  });
+
+  it("refreshToken should issue new access token with valid refresh cookie", async () => {
+    request.cookies = { refreshToken: "valid-refresh-token" };
+    authService.verifyRefreshToken.mockResolvedValue({
+      userId: "user-123",
+      token: {},
+    });
+    authService.decodeRefreshToken.mockReturnValue({
+      userId: "user-123",
+      role: "USER",
+    });
+    userService.getUserById.mockResolvedValue({ id: "user-123", role: "USER" });
+
+    await authController.refreshToken(request, reply);
+
+    expect(authService.verifyRefreshToken).toHaveBeenCalledWith(
+      "valid-refresh-token",
+    );
+    expect(authService.decodeRefreshToken).toHaveBeenCalled();
+    expect(userService.getUserById).toHaveBeenCalledWith({
+      userId: "user-123",
+    });
+    expect(reply.send).toHaveBeenCalledWith({ accessToken: "user-123-15m" });
+  });
+
+  it("oauthGoogleCallback should create a session on valid google profile", async () => {
+    request.server.googleOAuth2 = {
+      getAccessTokenFromAuthorizationCodeFlow: vi.fn().mockResolvedValue({
+        token: { access_token: "google-access-token" },
+      }),
+    };
+    authService.getGoogleProfile.mockResolvedValue({
+      email: "oauth@example.com",
+      name: "OAuth User",
+      picture: "https://example.com/avatar.jpg",
+      sub: "google-sub-123",
+    });
+    authService.findOrCreateOAuthUser.mockResolvedValue({
+      id: "oauth-user-1",
+      email: "oauth@example.com",
+      role: "USER",
+    });
+
+    await authController.oauthGoogleCallback(request, reply);
+
+    expect(authService.getGoogleProfile).toHaveBeenCalledWith(
+      "google-access-token",
+    );
+    expect(authService.findOrCreateOAuthUser).toHaveBeenCalledWith({
+      email: "oauth@example.com",
+      fullName: "OAuth User",
+      profileImage: "https://example.com/avatar.jpg",
+      provider: "google",
+      oauthId: "google-sub-123",
+    });
+    expect(reply.send).toHaveBeenCalledWith({
+      user: {
+        id: "oauth-user-1",
+        email: "oauth@example.com",
+        role: "USER",
+      },
+      accessToken: "oauth-user-1-15m",
     });
   });
 });

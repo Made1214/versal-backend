@@ -47,9 +47,7 @@ describe("isAuthenticated middleware", () => {
       user: { userId: "user-1" },
     };
 
-    await expect(isAuthenticated(request, {})).rejects.toThrow(
-      UnauthorizedError,
-    );
+    await expect(isAuthenticated(request, {})).rejects.toThrow("invalid token");
   });
 
   it("lanza UnauthorizedError cuando el usuario ya no existe", async () => {

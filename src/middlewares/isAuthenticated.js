@@ -7,11 +7,7 @@ import { normalizeRole } from "../utils/roles.js";
  * Verifica que el usuario esté autenticado mediante JWT
  */
 async function isAuthenticated(request, _reply) {
-  try {
-    await request.jwtVerify();
-  } catch {
-    throw new UnauthorizedError("Autenticación requerida");
-  }
+  await request.jwtVerify();
 
   if (!request.user?.userId) {
     throw new UnauthorizedError("Token inválido o usuario no encontrado");
