@@ -64,13 +64,18 @@ Obtiene el usuario actual. **Requiere autenticación.**
 
 ```json
 {
-  "user": { "id": "...", "email": "...", "username": "...", "role": "..." }
+  "user": {
+    "id": "...",
+    "email": "...",
+    "username": "...",
+    "role": "USER|ADMIN"
+  }
 }
 ```
 
 ### POST /auth/refresh
 
-Refresca el token de acceso.
+Refresca el token de acceso usando el `refreshToken` en cookie `httpOnly`.
 
 **Response 200:**
 
@@ -487,7 +492,7 @@ Obtiene todos los usuarios. **Requiere autenticación y rol admin.**
 **Response 200:**
 
 ```json
-[{ "id": "...", "username": "...", "email": "...", "role": "user" }]
+[{ "id": "...", "username": "...", "email": "...", "role": "USER" }]
 ```
 
 ### DELETE /users/:id
@@ -510,9 +515,11 @@ Actualiza el rol de un usuario. **Requiere autenticación y rol admin.**
 
 ```json
 {
-  "role": "admin"
+  "role": "ADMIN"
 }
 ```
+
+`role` también acepta `admin|user` por compatibilidad, pero se normaliza internamente a `ADMIN|USER`.
 
 **Response 200:**
 
@@ -521,7 +528,7 @@ Actualiza el rol de un usuario. **Requiere autenticación y rol admin.**
   "id": "...",
   "username": "...",
   "email": "...",
-  "role": "admin"
+  "role": "ADMIN"
 }
 ```
 

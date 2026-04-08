@@ -6,7 +6,7 @@ const mockUser = {
   username: "testuser",
   fullName: "Test User",
   password: "$2b$10$hashedPassword123",
-  role: "user",
+  role: "USER",
   bio: "Test bio",
   profileImage: "https://example.com/avatar.jpg",
   coins: 100,
@@ -62,17 +62,24 @@ describe("User Service", () => {
 
     it("lanza error si no existe", async () => {
       userRepo.findById.mockResolvedValue(null);
-      await expect(userService.getUserById({ userId: "no-existe" })).rejects.toThrow("Usuario no encontrado");
+      await expect(
+        userService.getUserById({ userId: "no-existe" }),
+      ).rejects.toThrow("Usuario no encontrado");
     });
 
     it("lanza error si está eliminado y includeDeleted=false", async () => {
       userRepo.findById.mockResolvedValue({ ...mockUser, isDeleted: true });
-      await expect(userService.getUserById({ userId: "user-123", includeDeleted: false })).rejects.toThrow("Usuario no encontrado");
+      await expect(
+        userService.getUserById({ userId: "user-123", includeDeleted: false }),
+      ).rejects.toThrow("Usuario no encontrado");
     });
 
     it("retorna usuario eliminado si includeDeleted=true", async () => {
       userRepo.findById.mockResolvedValue({ ...mockUser, isDeleted: true });
-      const result = await userService.getUserById({ userId: "user-123", includeDeleted: true });
+      const result = await userService.getUserById({
+        userId: "user-123",
+        includeDeleted: true,
+      });
       expect(result.id).toBe("user-123");
     });
   });
@@ -96,13 +103,19 @@ describe("User Service", () => {
     it("actualiza usuario correctamente", async () => {
       const updated = { ...mockUser, fullName: "Nuevo Nombre" };
       userRepo.update.mockResolvedValue(updated);
-      const result = await userService.updateUser({ userId: "user-123", data: { fullName: "Nuevo Nombre" } });
+      const result = await userService.updateUser({
+        userId: "user-123",
+        data: { fullName: "Nuevo Nombre" },
+      });
       expect(result.fullName).toBe("Nuevo Nombre");
     });
 
     it("no permite actualizar password por este método", async () => {
       userRepo.update.mockResolvedValue(mockUser);
-      await userService.updateUser({ userId: "user-123", data: { fullName: "Test", password: "hack" } });
+      await userService.updateUser({
+        userId: "user-123",
+        data: { fullName: "Test", password: "hack" },
+      });
       const callData = userRepo.update.mock.calls[0][1];
       expect(callData.password).toBeUndefined();
     });
@@ -114,19 +127,35 @@ describe("User Service", () => {
       bcrypt.compare.mockResolvedValue(true);
       bcrypt.hash.mockResolvedValue("$2b$10$newHash");
       userRepo.update.mockResolvedValue(mockUser);
-      const result = await userService.changePassword({ userId: "user-123", oldPassword: "OldPass1!", newPassword: "NewPass1!" });
+      const result = await userService.changePassword({
+        userId: "user-123",
+        oldPassword: "OldPass1!",
+        newPassword: "NewPass1!",
+      });
       expect(result.message).toContain("actualizada");
     });
 
     it("lanza error si contraseña nueva es débil", async () => {
       userRepo.findById.mockResolvedValue(mockUser);
-      await expect(userService.changePassword({ userId: "user-123", oldPassword: "OldPass1!", newPassword: "weak" })).rejects.toThrow("requisitos");
+      await expect(
+        userService.changePassword({
+          userId: "user-123",
+          oldPassword: "OldPass1!",
+          newPassword: "weak",
+        }),
+      ).rejects.toThrow("requisitos");
     });
 
     it("lanza error si contraseña antigua es incorrecta", async () => {
       userRepo.findById.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(false);
-      await expect(userService.changePassword({ userId: "user-123", oldPassword: "Wrong1!", newPassword: "NewPass1!" })).rejects.toThrow("incorrecta");
+      await expect(
+        userService.changePassword({
+          userId: "user-123",
+          oldPassword: "Wrong1!",
+          newPassword: "NewPass1!",
+        }),
+      ).rejects.toThrow("incorrecta");
     });
   });
 
@@ -135,35 +164,55 @@ describe("User Service", () => {
       userRepo.findById.mockResolvedValue(mockUser);
       userRepo.findFollow.mockResolvedValue(null);
       userRepo.createFollow.mockResolvedValue({});
-      const result = await userService.followUser({ currentUserId: "u1", targetUserId: "u2" });
+      const result = await userService.followUser({
+        currentUserId: "u1",
+        targetUserId: "u2",
+      });
       expect(result.success).toBe(true);
     });
 
     it("lanza error si intenta seguirse a sí mismo", async () => {
-      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
+      await expect(
+        userService.followUser({ currentUserId: "u1", targetUserId: "u1" }),
+      ).rejects.toThrow("ti mismo");
     });
 
     it("lanza error si ya sigue al usuario", async () => {
       userRepo.findById.mockResolvedValue(mockUser);
-      userRepo.findFollow.mockResolvedValue({ followerId: "u1", followeeId: "u2" });
-      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "u2" })).rejects.toThrow("Ya sigues");
+      userRepo.findFollow.mockResolvedValue({
+        followerId: "u1",
+        followeeId: "u2",
+      });
+      await expect(
+        userService.followUser({ currentUserId: "u1", targetUserId: "u2" }),
+      ).rejects.toThrow("Ya sigues");
     });
 
     it("lanza error si el usuario objetivo no existe", async () => {
       userRepo.findById.mockResolvedValue(null);
-      await expect(userService.followUser({ currentUserId: "u1", targetUserId: "no-existe" })).rejects.toThrow("no encontrado");
+      await expect(
+        userService.followUser({
+          currentUserId: "u1",
+          targetUserId: "no-existe",
+        }),
+      ).rejects.toThrow("no encontrado");
     });
   });
 
   describe("unfollowUser", () => {
     it("deja de seguir correctamente", async () => {
       userRepo.deleteFollow.mockResolvedValue({});
-      const result = await userService.unfollowUser({ currentUserId: "u1", targetUserId: "u2" });
+      const result = await userService.unfollowUser({
+        currentUserId: "u1",
+        targetUserId: "u2",
+      });
       expect(result.success).toBe(true);
     });
 
     it("lanza error si intenta dejar de seguirse a sí mismo", async () => {
-      await expect(userService.unfollowUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
+      await expect(
+        userService.unfollowUser({ currentUserId: "u1", targetUserId: "u1" }),
+      ).rejects.toThrow("ti mismo");
     });
   });
 
@@ -171,31 +220,46 @@ describe("User Service", () => {
     it("bloquea usuario correctamente", async () => {
       userRepo.findBlock.mockResolvedValue(null);
       userRepo.createBlock.mockResolvedValue({});
-      const result = await userService.blockUser({ currentUserId: "u1", targetUserId: "u2" });
+      const result = await userService.blockUser({
+        currentUserId: "u1",
+        targetUserId: "u2",
+      });
       expect(result.success).toBe(true);
     });
 
     it("lanza error si intenta bloquearse a sí mismo", async () => {
-      await expect(userService.blockUser({ currentUserId: "u1", targetUserId: "u1" })).rejects.toThrow("ti mismo");
+      await expect(
+        userService.blockUser({ currentUserId: "u1", targetUserId: "u1" }),
+      ).rejects.toThrow("ti mismo");
     });
 
     it("lanza error si ya está bloqueado", async () => {
-      userRepo.findBlock.mockResolvedValue({ blockerId: "u1", blockedId: "u2" });
-      await expect(userService.blockUser({ currentUserId: "u1", targetUserId: "u2" })).rejects.toThrow("Ya has bloqueado");
+      userRepo.findBlock.mockResolvedValue({
+        blockerId: "u1",
+        blockedId: "u2",
+      });
+      await expect(
+        userService.blockUser({ currentUserId: "u1", targetUserId: "u2" }),
+      ).rejects.toThrow("Ya has bloqueado");
     });
   });
 
   describe("unblockUser", () => {
     it("desbloquea usuario correctamente", async () => {
       userRepo.deleteBlock.mockResolvedValue({});
-      const result = await userService.unblockUser({ currentUserId: "u1", targetUserId: "u2" });
+      const result = await userService.unblockUser({
+        currentUserId: "u1",
+        targetUserId: "u2",
+      });
       expect(result.success).toBe(true);
     });
   });
 
   describe("getFollowers", () => {
     it("retorna lista de seguidores", async () => {
-      userRepo.findFollowers.mockResolvedValue([{ id: "u2", username: "user2", profileImage: null }]);
+      userRepo.findFollowers.mockResolvedValue([
+        { id: "u2", username: "user2", profileImage: null },
+      ]);
       const result = await userService.getFollowers({ userId: "u1" });
       expect(result).toHaveLength(1);
       expect(result[0].username).toBe("user2");
@@ -204,7 +268,9 @@ describe("User Service", () => {
 
   describe("getFollowing", () => {
     it("retorna lista de seguidos", async () => {
-      userRepo.findFollowing.mockResolvedValue([{ id: "u2", username: "user2", profileImage: null }]);
+      userRepo.findFollowing.mockResolvedValue([
+        { id: "u2", username: "user2", profileImage: null },
+      ]);
       const result = await userService.getFollowing({ userId: "u1" });
       expect(result).toHaveLength(1);
     });
@@ -212,7 +278,9 @@ describe("User Service", () => {
 
   describe("getBlockedUsers", () => {
     it("retorna lista de bloqueados", async () => {
-      userRepo.findBlockedUsers.mockResolvedValue([{ id: "u2", username: "user2", email: "u2@test.com" }]);
+      userRepo.findBlockedUsers.mockResolvedValue([
+        { id: "u2", username: "user2", email: "u2@test.com" },
+      ]);
       const result = await userService.getBlockedUsers({ userId: "u1" });
       expect(result).toHaveLength(1);
     });
@@ -243,7 +311,10 @@ describe("User Service", () => {
 
     it("hace hard delete si se pide", async () => {
       userRepo.hardDelete.mockResolvedValue({});
-      const result = await userService.deleteUser({ userId: "u1", hardDelete: true });
+      const result = await userService.deleteUser({
+        userId: "u1",
+        hardDelete: true,
+      });
       expect(result.message).toContain("permanentemente");
       expect(userRepo.hardDelete).toHaveBeenCalledWith("u1");
     });
@@ -251,13 +322,25 @@ describe("User Service", () => {
 
   describe("updateUserRole", () => {
     it("actualiza rol correctamente", async () => {
-      userRepo.update.mockResolvedValue({ ...mockUser, role: "admin" });
-      const result = await userService.updateUserRole({ userId: "u1", role: "admin" });
-      expect(userRepo.update).toHaveBeenCalledWith("u1", { role: "admin" });
+      userRepo.update.mockResolvedValue({ ...mockUser, role: "ADMIN" });
+      const result = await userService.updateUserRole({
+        userId: "u1",
+        role: "admin",
+      });
+      expect(userRepo.update).toHaveBeenCalledWith("u1", { role: "ADMIN" });
+      expect(result.role).toBe("ADMIN");
+    });
+
+    it("acepta role en mayúsculas y lo persiste igual", async () => {
+      userRepo.update.mockResolvedValue({ ...mockUser, role: "ADMIN" });
+      await userService.updateUserRole({ userId: "u1", role: "ADMIN" });
+      expect(userRepo.update).toHaveBeenCalledWith("u1", { role: "ADMIN" });
     });
 
     it("lanza error si rol es inválido", async () => {
-      await expect(userService.updateUserRole({ userId: "u1", role: "superadmin" })).rejects.toThrow("Rol inválido");
+      await expect(
+        userService.updateUserRole({ userId: "u1", role: "superadmin" }),
+      ).rejects.toThrow("Rol inválido");
     });
   });
 });
