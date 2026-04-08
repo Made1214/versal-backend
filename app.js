@@ -61,24 +61,28 @@ fastify.register(authPlugin);
 fastify.register(databasePlugin);
 
 // Google OAuth2
-fastify.register(fastifyOAuth2, {
-  name: "googleOAuth2",
-  scope: ["openid", "email", "profile"],
-  credentials: {
-    client: {
-      id: config.GOOGLE_CLIENT_ID,
-      secret: config.GOOGLE_CLIENT_SECRET,
+if (config.HAS_GOOGLE_OAUTH) {
+  fastify.register(fastifyOAuth2, {
+    name: "googleOAuth2",
+    scope: ["openid", "email", "profile"],
+    credentials: {
+      client: {
+        id: config.GOOGLE_CLIENT_ID,
+        secret: config.GOOGLE_CLIENT_SECRET,
+      },
+      auth: {
+        authorizeHost: "https://accounts.google.com",
+        authorizePath: "/o/oauth2/v2/auth",
+        tokenHost: "https://oauth2.googleapis.com",
+        tokenPath: "/token",
+      },
     },
-    auth: {
-      authorizeHost: "https://accounts.google.com",
-      authorizePath: "/o/oauth2/v2/auth",
-      tokenHost: "https://oauth2.googleapis.com",
-      tokenPath: "/token",
-    },
-  },
-  startRedirectPath: "/api/auth/oauth/google",
-  callbackUri: config.GOOGLE_OAUTH_CALLBACK_URL,
-});
+    startRedirectPath: "/api/auth/oauth/google",
+    callbackUri: config.GOOGLE_OAUTH_CALLBACK_URL,
+  });
+} else {
+  fastify.log.info("Google OAuth deshabilitado: faltan variables de entorno.");
+}
 
 // Multipart
 fastify.register(fastifyMultipart);

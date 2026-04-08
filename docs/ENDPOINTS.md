@@ -109,6 +109,14 @@ Solicita recuperación de contraseña.
 }
 ```
 
+**Response 200:**
+
+```json
+{
+  "message": "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña."
+}
+```
+
 ### POST /auth/reset-password
 
 Resetea la contraseña con el token recibido.
@@ -126,6 +134,8 @@ Resetea la contraseña con el token recibido.
 ### GET /auth/oauth/google
 
 Inicia el flujo de autenticación con Google OAuth.
+
+**Nota:** Endpoint disponible solo si el servidor tiene configuradas las variables de entorno de Google OAuth.
 
 ### GET /auth/oauth/google/callback
 

@@ -45,12 +45,6 @@ const schema = {
     "JWT_SECRET",
     "DATABASE_URL",
     "CORS_ORIGINS",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "GOOGLE_OAUTH_CALLBACK_URL",
-    "CLOUDINARY_CLOUD_NAME",
-    "CLOUDINARY_API_KEY",
-    "CLOUDINARY_API_SECRET",
   ],
   properties: {
     // Servidor
@@ -95,15 +89,12 @@ const schema = {
     // OAuth Google
     GOOGLE_CLIENT_ID: {
       type: "string",
-      default: "placeholder",
     },
     GOOGLE_CLIENT_SECRET: {
       type: "string",
-      default: "placeholder",
     },
     GOOGLE_OAUTH_CALLBACK_URL: {
       type: "string",
-      default: "http://localhost:3000/api/auth/oauth/google/callback",
     },
 
     // Stripe (opcional)
@@ -182,5 +173,28 @@ if (
     "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET deben estar todas configuradas o todas ausentes",
   );
 }
+
+// Validar que Google OAuth esté completamente configurado o no configurado
+if (
+  (config.GOOGLE_CLIENT_ID &&
+    (!config.GOOGLE_CLIENT_SECRET || !config.GOOGLE_OAUTH_CALLBACK_URL)) ||
+  (!config.GOOGLE_CLIENT_ID &&
+    (config.GOOGLE_CLIENT_SECRET || config.GOOGLE_OAUTH_CALLBACK_URL))
+) {
+  throw new Error(
+    "GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y GOOGLE_OAUTH_CALLBACK_URL deben estar todas configuradas o todas ausentes",
+  );
+}
+
+config.HAS_CLOUDINARY = Boolean(
+  config.CLOUDINARY_CLOUD_NAME &&
+  config.CLOUDINARY_API_KEY &&
+  config.CLOUDINARY_API_SECRET,
+);
+config.HAS_GOOGLE_OAUTH = Boolean(
+  config.GOOGLE_CLIENT_ID &&
+  config.GOOGLE_CLIENT_SECRET &&
+  config.GOOGLE_OAUTH_CALLBACK_URL,
+);
 
 export default config;

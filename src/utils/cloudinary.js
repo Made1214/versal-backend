@@ -9,7 +9,17 @@ cloudinary.config({
   api_secret: config.CLOUDINARY_API_SECRET,
 });
 
+function ensureCloudinaryConfigured() {
+  if (!config.HAS_CLOUDINARY) {
+    throw new ValidationError(
+      "Cloudinary no está configurado. Define CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET.",
+    );
+  }
+}
+
 function createCloudinaryStream(folder, resourceType = "image") {
+  ensureCloudinaryConfigured();
+
   let uploadStream;
 
   const uploadOptions = {
@@ -73,6 +83,8 @@ export async function uploadChapterVideo(file) {
 }
 
 export async function deleteImage(publicId, resourceType = "image") {
+  ensureCloudinaryConfigured();
+
   if (!publicId) {
     throw new ValidationError("Public ID is required to delete an image.");
   }

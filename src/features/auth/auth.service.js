@@ -121,7 +121,10 @@ async function revokeRefreshToken(token) {
 async function requestPasswordReset({ email }) {
   const user = await userService.getUserByEmail(email);
   if (!user) {
-    throw new NotFoundError("No se encontró el usuario.");
+    return {
+      message:
+        "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+    };
   }
 
   const token = crypto.randomBytes(32).toString("hex");
@@ -135,7 +138,8 @@ async function requestPasswordReset({ email }) {
   });
 
   const response = {
-    message: "Reset password token generated. Revisa tu email.",
+    message:
+      "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
   };
 
   if (process.env.NODE_ENV !== "production") {

@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NotFoundError, ValidationError } from "../../utils/errors.js";
 
 vi.mock("../../features/auth/auth.service.js", () => ({
   registerUser: vi.fn(),
   saveRefreshToken: vi.fn(),
   loginUser: vi.fn(),
+  verifyRefreshToken: vi.fn(),
+  revokeRefreshToken: vi.fn(),
+  requestPasswordReset: vi.fn(),
+  resetPassword: vi.fn(),
   findOrCreateOAuthUser: vi.fn(),
 }));
 
@@ -77,6 +82,48 @@ describe("Auth Controller", () => {
         fullName: "Test User",
       },
       accessToken: "user-123-15m",
+    });
+  });
+
+  it("forgotPassword should return generic message", async () => {
+    authService.requestPasswordReset.mockResolvedValue({
+      message:
+        "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+    });
+
+    await authController.forgotPassword(request, reply);
+
+    expect(authService.requestPasswordReset).toHaveBeenCalledWith({
+      email: "test@example.com",
+    });
+    expect(reply.code).toHaveBeenCalledWith(200);
+    expect(reply.send).toHaveBeenCalledWith({
+      message:
+        "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+    });
+  });
+
+  it("oauthGoogleCallback should fail when Google OAuth is not configured", async () => {
+    request.server.googleOAuth2 = undefined;
+
+    await expect(
+      authController.oauthGoogleCallback(request, reply),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("logout should ignore missing refresh token record and clear cookie", async () => {
+    request.cookies = { refreshToken: "missing-token" };
+    authService.revokeRefreshToken.mockRejectedValue(
+      new NotFoundError("Refresh token inválido para revocación."),
+    );
+
+    await authController.logout(request, reply);
+
+    expect(reply.clearCookie).toHaveBeenCalledWith("refreshToken", {
+      path: "/",
+    });
+    expect(reply.send).toHaveBeenCalledWith({
+      message: "Sesión cerrada exitosamente",
     });
   });
 });

@@ -191,7 +191,8 @@ describe("auth.service", () => {
           }),
         });
         expect(result).toEqual({
-          message: "Reset password token generated. Revisa tu email.",
+          message:
+            "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
           token: "random-token-123",
         });
       } finally {
@@ -210,11 +211,26 @@ describe("auth.service", () => {
         });
 
         expect(result).toEqual({
-          message: "Reset password token generated. Revisa tu email.",
+          message:
+            "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
         });
       } finally {
         process.env.NODE_ENV = originalEnv;
       }
+    });
+
+    it("returns a generic response when email does not exist", async () => {
+      userService.getUserByEmail.mockResolvedValue(null);
+
+      const result = await authService.requestPasswordReset({
+        email: "missing@example.com",
+      });
+
+      expect(prisma.passwordReset.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        message:
+          "Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.",
+      });
     });
   });
 

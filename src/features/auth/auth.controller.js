@@ -1,12 +1,37 @@
 import * as authService from "./auth.service.js";
 import * as userService from "../users/user.service.js";
-import { UnauthorizedError, ValidationError } from "../../utils/errors.js";
+import config from "../../config/index.js";
+import {
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "../../utils/errors.js";
 import { normalizeRole } from "../../utils/roles.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-const REFRESH_TOKEN_MAX_AGE = 15 * 24 * 60 * 60;
-const REFRESH_TOKEN_EXPIRY = "15d";
-const ACCESS_TOKEN_EXPIRY = "15m";
+const ACCESS_TOKEN_EXPIRY = config.JWT_EXPIRES_IN;
+const REFRESH_TOKEN_EXPIRY = config.REFRESH_TOKEN_EXPIRES_IN;
+
+function parseDurationToSeconds(duration, fallbackInSeconds) {
+  const match = /^(\d+)([smhd])$/.exec(String(duration || "").trim());
+  if (!match) return fallbackInSeconds;
+
+  const value = Number(match[1]);
+  const unit = match[2];
+  const multipliers = {
+    s: 1,
+    m: 60,
+    h: 60 * 60,
+    d: 24 * 60 * 60,
+  };
+
+  return value * multipliers[unit];
+}
+
+const REFRESH_TOKEN_MAX_AGE = parseDurationToSeconds(
+  REFRESH_TOKEN_EXPIRY,
+  15 * 24 * 60 * 60,
+);
 
 function setRefreshCookie(reply, refreshToken) {
   return reply.setCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
@@ -69,19 +94,47 @@ async function login(request, reply) {
 }
 
 async function oauthGoogleCallback(request, reply) {
+  if (!request.server.googleOAuth2) {
+    throw new ValidationError(
+      "Google OAuth no está configurado en el servidor.",
+    );
+  }
+
   const tokenObject =
     await request.server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
       request,
     );
   const access_token = tokenObject.token.access_token;
 
-  const userInfoResp = await fetch(
-    "https://www.googleapis.com/oauth2/v3/userinfo",
-    {
-      headers: { Authorization: `Bearer ${access_token}` },
-    },
-  );
-  const profile = await userInfoResp.json();
+  if (!access_token) {
+    throw new ValidationError(
+      "No se pudo obtener el token de acceso de Google.",
+    );
+  }
+
+  let profile;
+  try {
+    const userInfoResp = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: { Authorization: `Bearer ${access_token}` },
+      },
+    );
+
+    if (!userInfoResp.ok) {
+      throw new ValidationError("No se pudo obtener el perfil de Google.");
+    }
+
+    profile = await userInfoResp.json();
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+
+    throw new ValidationError(
+      "Error al consultar la información del usuario en Google.",
+    );
+  }
 
   if (!profile.email) {
     throw new ValidationError("No se obtuvo email de Google");
@@ -126,7 +179,9 @@ async function refreshToken(request, reply) {
   await userService.getUserById({ userId: decoded.userId });
 
   const payload = { userId: decoded.userId, role };
-  const accessToken = request.jwtSign(payload, { expiresIn: "15m" });
+  const accessToken = request.jwtSign(payload, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
 
   return reply.send({ accessToken });
 }
@@ -134,12 +189,18 @@ async function refreshToken(request, reply) {
 async function logout(request, reply) {
   const refreshToken = request.cookies[REFRESH_TOKEN_COOKIE_NAME];
   if (refreshToken) {
-    await authService.revokeRefreshToken(refreshToken);
+    try {
+      await authService.revokeRefreshToken(refreshToken);
+    } catch (error) {
+      if (!(error instanceof NotFoundError)) {
+        throw error;
+      }
+    }
   }
 
   reply
     .clearCookie(REFRESH_TOKEN_COOKIE_NAME, { path: "/" })
-    .send({ message: "Logged out" });
+    .send({ message: "Sesión cerrada exitosamente" });
 }
 
 async function me(request, reply) {
