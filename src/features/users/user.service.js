@@ -7,6 +7,15 @@ import {
 } from "../../utils/errors.js";
 import { normalizeRole } from "../../utils/roles.js";
 
+const PROFILE_UPDATABLE_FIELDS = new Set([
+  "fullName",
+  "username",
+  "email",
+  "bio",
+  "profileImage",
+  "profileImagePublicId",
+]);
+
 // Validación de contraseña
 function isValidPassword(password) {
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z\d]).{8,}$/;
@@ -44,8 +53,22 @@ async function getUserByEmail(email, includeDeleted = false) {
 
 // Editar perfil
 async function updateUser({ userId, data }) {
-  if (data.password) {
-    delete data.password;
+  const forbiddenFields = Object.keys(data).filter(
+    (field) => !PROFILE_UPDATABLE_FIELDS.has(field),
+  );
+
+  if (forbiddenFields.length > 0) {
+    throw new ValidationError(
+      `Campos no permitidos en la actualización: ${forbiddenFields.join(", ")}`,
+    );
+  }
+
+  if (data.email && !isValidEmail(data.email)) {
+    throw new ValidationError("El email no es válido.");
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ValidationError("No se enviaron campos válidos para actualizar.");
   }
 
   const updatedUser = await userRepo.update(userId, data);

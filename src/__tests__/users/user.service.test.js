@@ -111,13 +111,39 @@ describe("User Service", () => {
     });
 
     it("no permite actualizar password por este método", async () => {
-      userRepo.update.mockResolvedValue(mockUser);
-      await userService.updateUser({
-        userId: "user-123",
-        data: { fullName: "Test", password: "hack" },
-      });
-      const callData = userRepo.update.mock.calls[0][1];
-      expect(callData.password).toBeUndefined();
+      await expect(
+        userService.updateUser({
+          userId: "user-123",
+          data: { fullName: "Test", password: "hack" },
+        }),
+      ).rejects.toThrow("Campos no permitidos");
+    });
+
+    it("rechaza campos privilegiados en actualización de perfil", async () => {
+      await expect(
+        userService.updateUser({
+          userId: "user-123",
+          data: { role: "ADMIN" },
+        }),
+      ).rejects.toThrow("Campos no permitidos");
+    });
+
+    it("rechaza payload sin campos permitidos", async () => {
+      await expect(
+        userService.updateUser({
+          userId: "user-123",
+          data: {},
+        }),
+      ).rejects.toThrow("No se enviaron campos válidos");
+    });
+
+    it("valida formato de email en actualización", async () => {
+      await expect(
+        userService.updateUser({
+          userId: "user-123",
+          data: { email: "email-invalido" },
+        }),
+      ).rejects.toThrow("email no es válido");
     });
   });
 

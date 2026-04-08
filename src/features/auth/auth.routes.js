@@ -1,5 +1,6 @@
 import * as authController from "./auth.controller.js";
 import authRateLimitPlugin from "../../plugins/authRateLimit.plugin.js";
+import config from "../../config/index.js";
 import {
   loginSchema,
   registerSchema,
@@ -37,11 +38,13 @@ async function authRoutes(fastify) {
   );
   fastify.post("/auth/logout", { schema: logoutSchema }, authController.logout);
 
-  fastify.get(
-    "/auth/oauth/google/callback",
-    { schema: { response: { 200: { type: 'object' } } } },
-    authController.oauthGoogleCallback,
-  );
+  if (config.HAS_GOOGLE_OAUTH) {
+    fastify.get(
+      "/auth/oauth/google/callback",
+      { schema: { response: { 200: { type: "object" } } } },
+      authController.oauthGoogleCallback,
+    );
+  }
 
   fastify.get(
     "/auth/me",

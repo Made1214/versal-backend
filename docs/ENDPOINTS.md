@@ -142,6 +142,8 @@ Este endpoint lo expone el plugin `@fastify/oauth2` mediante `startRedirectPath`
 
 Callback de Google OAuth.
 
+**Nota:** Endpoint disponible solo si el servidor tiene configuradas las variables de entorno de Google OAuth.
+
 ---
 
 ## 📚 Stories Endpoints

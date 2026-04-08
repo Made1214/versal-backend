@@ -11,8 +11,7 @@ async function isOwner(request, reply) {
   // Primero verificar autenticación
   await isAuthenticated(request, reply);
 
-  const ownerParam = request.routeOptions?.config?.ownerParam;
-  const candidates = [ownerParam, "id", "userId"].filter(Boolean);
+  const candidates = ["id", "userId"];
   const resourceId = candidates
     .map((key) => request.params?.[key])
     .find(Boolean);

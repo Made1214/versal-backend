@@ -4,7 +4,6 @@ import { deleteImage, uploadAvatar } from "../../utils/cloudinary.js";
 // Obtener usuario actual
 async function getCurrentUser(req, reply) {
   const user = await userService.getUserById({ userId: req.user.userId });
-  if (!user) return reply.code(404).send({ message: "Usuario no encontrado" });
   reply.send(user);
 }
 
@@ -12,10 +11,6 @@ async function getCurrentUser(req, reply) {
 async function getUserProfileById(req, reply) {
   const { id } = req.params;
   const user = await userService.getUserById({ userId: id });
-
-  if (!user) {
-    return reply.code(404).send({ message: "Usuario no encontrado" });
-  }
 
   const publicUser = { ...user };
   delete publicUser.password;
