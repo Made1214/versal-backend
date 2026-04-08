@@ -9,6 +9,8 @@
     "start": "cross-env NODE_ENV=production node app.js",
     "dev:production": "cross-env NODE_ENV=production node --watch app.js",
     "dev:test": "cross-env NODE_ENV=test node --watch app.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "db:create": "node scripts/create_postgres_db.js",
     "db:migrate": "npx prisma migrate dev --name init",
     "prisma:generate": "npx prisma generate",
@@ -40,9 +42,12 @@
     "stripe": "^18.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitest/ui": "^4.1.2",
     "cross-env": "^7.0.3",
+    "eslint": "^10.2.0",
     "fastify-plugin": "^5.0.1",
+    "globals": "^17.4.0",
     "prisma": "^6.19.2",
     "vitest": "^4.1.2"
   }

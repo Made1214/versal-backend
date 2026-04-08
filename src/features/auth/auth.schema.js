@@ -1,4 +1,4 @@
-import { userBase, authHeaders, messageResponse } from "../../schemas/shared.schema.js";
+import { userBase, messageResponse } from "../../schemas/shared.schema.js";
 
 const loginSchema = {
   body: {

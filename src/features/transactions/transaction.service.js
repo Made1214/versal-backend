@@ -144,7 +144,7 @@ async function handleStripeWebhookEvent(event) {
   const stripe = getStripeClient();
 
   switch (event.type) {
-    case "checkout.session.completed":
+    case "checkout.session.completed": {
       const session = event.data.object;
 
       const transaction = await transactionRepo.findByMetadata(
@@ -201,8 +201,9 @@ async function handleStripeWebhookEvent(event) {
         }
       }
       break;
+    }
 
-    case "invoice.payment_succeeded":
+    case "invoice.payment_succeeded": {
       const invoice = event.data.object;
       if (invoice.subscription) {
         const subscription = await stripe.subscriptions.retrieve(
@@ -233,8 +234,9 @@ async function handleStripeWebhookEvent(event) {
         }
       }
       break;
+    }
 
-    case "invoice.payment_failed":
+    case "invoice.payment_failed": {
       const failedInvoice = event.data.object;
       if (failedInvoice.subscription) {
         const subscription = await stripe.subscriptions.retrieve(
@@ -249,8 +251,9 @@ async function handleStripeWebhookEvent(event) {
         }
       }
       break;
+    }
 
-    case "customer.subscription.deleted":
+    case "customer.subscription.deleted": {
       const deletedSubscription = event.data.object;
 
       const userIdSubDeleted = deletedSubscription.metadata.prismaUserId;
@@ -272,6 +275,7 @@ async function handleStripeWebhookEvent(event) {
         },
       );
       break;
+    }
 
     default:
     // Unhandled event type

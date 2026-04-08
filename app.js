@@ -1,16 +1,10 @@
 // Versal/backend/app.js
-import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 import fastifyLib from "fastify";
 
 const fastify = fastifyLib({ logger: true });
 
 // Configuración centralizada (valida env vars al cargar)
 import config from "./src/config/index.js";
-
-// Importar Prisma
-import prisma from "./src/config/prisma.js";
 
 // Importar componentes de infraestructura
 import errorHandler from "./src/middlewares/errorHandler.js";
@@ -23,15 +17,10 @@ import authPlugin from "./src/plugins/auth.plugin.js";
 import jwt from "@fastify/jwt";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
-import fastifyStatic from "@fastify/static";
 import fastifyRawBody from "fastify-raw-body";
 import fastifyOAuth2 from "@fastify/oauth2";
 import databasePlugin from "./src/plugins/database.plugin.js";
 import routesPlugin from "./src/plugins/routes.plugin.js";
-
-// ESM equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // ============================================
 // REGISTRAR PLUGINS DE SEGURIDAD Y UTILIDAD

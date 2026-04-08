@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
 import prisma from "../../config/prisma.js";
 import * as tagRepository from "../../repositories/tag.repository.js";
-import { ValidationError, NotFoundError, ConflictError } from "../../utils/errors.js";
+import {
+  ValidationError,
+  NotFoundError,
+  ConflictError,
+} from "../../utils/errors.js";
 
 describe("Tag Repository", () => {
-
   describe("createTag", () => {
     it("debe crear una etiqueta con datos válidos", async () => {
       const tagData = { name: "Magia" };
@@ -22,7 +25,9 @@ describe("Tag Repository", () => {
     });
 
     it("debe lanzar ValidationError si falta name", async () => {
-      await expect(tagRepository.createTag({})).rejects.toThrow(ValidationError);
+      await expect(tagRepository.createTag({})).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it("debe lanzar ConflictError si la etiqueta ya existe", async () => {
@@ -30,7 +35,9 @@ describe("Tag Repository", () => {
 
       prisma.tag.findUnique.mockResolvedValue({ id: "tag-1", name: "Magia" });
 
-      await expect(tagRepository.createTag(tagData)).rejects.toThrow(ConflictError);
+      await expect(tagRepository.createTag(tagData)).rejects.toThrow(
+        ConflictError,
+      );
     });
   });
 
@@ -56,11 +63,15 @@ describe("Tag Repository", () => {
     it("debe lanzar NotFoundError si la etiqueta no existe", async () => {
       prisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.getTagById("tag-999")).rejects.toThrow(NotFoundError);
+      await expect(tagRepository.getTagById("tag-999")).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("debe lanzar ValidationError si falta tagId", async () => {
-      await expect(tagRepository.getTagById(null)).rejects.toThrow(ValidationError);
+      await expect(tagRepository.getTagById(null)).rejects.toThrow(
+        ValidationError,
+      );
     });
   });
 
@@ -86,7 +97,9 @@ describe("Tag Repository", () => {
     it("debe lanzar NotFoundError si la etiqueta no existe", async () => {
       prisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.getTagByName("NoExiste")).rejects.toThrow(NotFoundError);
+      await expect(tagRepository.getTagByName("NoExiste")).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
@@ -117,7 +130,10 @@ describe("Tag Repository", () => {
       const updateData = { name: "Magia Oscura" };
       const mockTag = { id: "tag-1", name: "Magia Oscura" };
 
-      prisma.tag.findUnique.mockResolvedValueOnce({ id: "tag-1", name: "Magia" });
+      prisma.tag.findUnique.mockResolvedValueOnce({
+        id: "tag-1",
+        name: "Magia",
+      });
       prisma.tag.findUnique.mockResolvedValueOnce(null);
       prisma.tag.update.mockResolvedValue(mockTag);
 
@@ -133,16 +149,24 @@ describe("Tag Repository", () => {
     it("debe lanzar NotFoundError si la etiqueta no existe", async () => {
       prisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.updateTag("tag-999", {})).rejects.toThrow(NotFoundError);
+      await expect(tagRepository.updateTag("tag-999", {})).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("debe lanzar ConflictError si el nuevo nombre ya existe", async () => {
-      prisma.tag.findUnique.mockResolvedValueOnce({ id: "tag-1", name: "Magia" });
-      prisma.tag.findUnique.mockResolvedValueOnce({ id: "tag-2", name: "Dragones" });
+      prisma.tag.findUnique.mockResolvedValueOnce({
+        id: "tag-1",
+        name: "Magia",
+      });
+      prisma.tag.findUnique.mockResolvedValueOnce({
+        id: "tag-2",
+        name: "Dragones",
+      });
 
-      await expect(tagRepository.updateTag("tag-1", { name: "Dragones" })).rejects.toThrow(
-        ConflictError
-      );
+      await expect(
+        tagRepository.updateTag("tag-1", { name: "Dragones" }),
+      ).rejects.toThrow(ConflictError);
     });
   });
 
@@ -166,13 +190,17 @@ describe("Tag Repository", () => {
       prisma.tag.findUnique.mockResolvedValue({ id: "tag-1", name: "Magia" });
       prisma.storyTag.count.mockResolvedValue(5);
 
-      await expect(tagRepository.deleteTag("tag-1")).rejects.toThrow(ValidationError);
+      await expect(tagRepository.deleteTag("tag-1")).rejects.toThrow(
+        ValidationError,
+      );
     });
 
     it("debe lanzar NotFoundError si la etiqueta no existe", async () => {
       prisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.deleteTag("tag-999")).rejects.toThrow(NotFoundError);
+      await expect(tagRepository.deleteTag("tag-999")).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
@@ -197,22 +225,29 @@ describe("Tag Repository", () => {
     it("debe lanzar NotFoundError si la historia no existe", async () => {
       prisma.story.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.addTagToStory("story-999", "tag-1")).rejects.toThrow(NotFoundError);
+      await expect(
+        tagRepository.addTagToStory("story-999", "tag-1"),
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("debe lanzar NotFoundError si la etiqueta no existe", async () => {
       prisma.story.findUnique.mockResolvedValue({ id: "story-1" });
       prisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(tagRepository.addTagToStory("story-1", "tag-999")).rejects.toThrow(NotFoundError);
+      await expect(
+        tagRepository.addTagToStory("story-1", "tag-999"),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 
   describe("removeTagFromStory", () => {
     it("debe remover una etiqueta de una historia", async () => {
-      prisma.storyTag.delete.mockResolvedValue({ storyId: "story-1", tagId: "tag-1" });
+      prisma.storyTag.delete.mockResolvedValue({
+        storyId: "story-1",
+        tagId: "tag-1",
+      });
 
-      const result = await tagRepository.removeTagFromStory("story-1", "tag-1");
+      await tagRepository.removeTagFromStory("story-1", "tag-1");
 
       expect(prisma.storyTag.delete).toHaveBeenCalledWith({
         where: { storyId_tagId: { storyId: "story-1", tagId: "tag-1" } },
@@ -223,8 +258,16 @@ describe("Tag Repository", () => {
   describe("getStoryTags", () => {
     it("debe obtener todas las etiquetas de una historia", async () => {
       const mockStoryTags = [
-        { storyId: "story-1", tagId: "tag-1", tag: { id: "tag-1", name: "Magia" } },
-        { storyId: "story-1", tagId: "tag-2", tag: { id: "tag-2", name: "Aventura" } },
+        {
+          storyId: "story-1",
+          tagId: "tag-1",
+          tag: { id: "tag-1", name: "Magia" },
+        },
+        {
+          storyId: "story-1",
+          tagId: "tag-2",
+          tag: { id: "tag-2", name: "Aventura" },
+        },
       ];
 
       prisma.storyTag.findMany.mockResolvedValue(mockStoryTags);

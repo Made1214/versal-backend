@@ -123,7 +123,7 @@ async function deleteStory(request, reply) {
     await deleteImage(existingStory.coverImagePublicId, "image");
   }
 
-  const result = await storyService.deleteStory(id);
+  await storyService.deleteStory(id);
   reply.send({ message: "Historia eliminada exitosamente." });
 }
 

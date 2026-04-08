@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 /**
  * Crea un objeto request mock para tests de controllers
@@ -7,9 +7,9 @@ import { vi } from 'vitest';
  */
 export const createMockRequest = (overrides = {}) => ({
   user: {
-    id: 'user-123',
-    userId: 'user-123', // Prisma usa userId en algunos lugares
-    role: 'user',
+    id: "user-123",
+    userId: "user-123", // Prisma usa userId en algunos lugares
+    role: "user",
   },
   params: {},
   query: {},
@@ -47,7 +47,10 @@ export const createMockReply = () => {
  * @param {Object} payload - Payload del token (default: user básico)
  * @returns {String} JWT token
  */
-export const generateJWT = (app, payload = { id: 'user-123', role: 'user' }) => {
+export const generateJWT = (
+  app,
+  payload = { id: "user-123", role: "user" },
+) => {
   return app.jwt.sign(payload);
 };
 
@@ -57,7 +60,7 @@ export const generateJWT = (app, payload = { id: 'user-123', role: 'user' }) => 
  * @returns {String} JWT token de admin
  */
 export const generateAdminJWT = (app) => {
-  return app.jwt.sign({ id: 'admin-123', role: 'admin' });
+  return app.jwt.sign({ id: "admin-123", role: "admin" });
 };
 
 /**
@@ -91,8 +94,8 @@ export const clearAllMocks = () => {
  */
 export const createMockFastifyApp = () => ({
   jwt: {
-    sign: vi.fn().mockReturnValue('mock-jwt-token'),
-    verify: vi.fn().mockReturnValue({ id: 'user-123', role: 'user' }),
+    sign: vi.fn().mockReturnValue("mock-jwt-token"),
+    verify: vi.fn().mockReturnValue({ id: "user-123", role: "user" }),
   },
   log: {
     info: vi.fn(),
@@ -109,7 +112,9 @@ export const createMockFastifyApp = () => ({
  * @returns {Boolean} true si tiene todos los campos
  */
 export const hasRequiredFields = (obj, requiredFields) => {
-  return requiredFields.every((field) => obj.hasOwnProperty(field));
+  return requiredFields.every((field) =>
+    Object.prototype.hasOwnProperty.call(obj, field),
+  );
 };
 
 /**
@@ -151,7 +156,9 @@ export const generators = {
    * Genera un string aleatorio de longitud específica
    */
   string: (length = 10) => {
-    return Math.random().toString(36).substring(2, 2 + length);
+    return Math.random()
+      .toString(36)
+      .substring(2, 2 + length);
   },
 
   /**
@@ -189,9 +196,9 @@ export const expectError = (error, expectedType, expectedMessage = null) => {
  * @returns {Object} Mock file object
  */
 export const createMockFile = (options = {}) => ({
-  filename: options.filename || 'test-file.jpg',
-  mimetype: options.mimetype || 'image/jpeg',
-  encoding: options.encoding || '7bit',
+  filename: options.filename || "test-file.jpg",
+  mimetype: options.mimetype || "image/jpeg",
+  encoding: options.encoding || "7bit",
   file: {
     pipe: vi.fn(),
     on: vi.fn(),

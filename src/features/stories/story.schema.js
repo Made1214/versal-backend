@@ -124,7 +124,8 @@ const getAuthorStoriesSchema = {
 
 const updateStorySchema = {
   summary: "Actualiza una historia",
-  description: "Actualiza los detalles de una historia existente. Solo el autor puede hacerlo.",
+  description:
+    "Actualiza los detalles de una historia existente. Solo el autor puede hacerlo.",
   tags: ["Stories"],
   headers: authHeaders,
   params: {
@@ -185,7 +186,10 @@ const getStoriesByCategorySchema = {
   params: {
     type: "object",
     properties: {
-      categoryName: { type: "string", description: "El nombre de la categoría a buscar" },
+      categoryName: {
+        type: "string",
+        description: "El nombre de la categoría a buscar",
+      },
     },
     required: ["categoryName"],
   },
@@ -214,7 +218,10 @@ const getStoriesByTagSchema = {
   params: {
     type: "object",
     properties: {
-      tagName: { type: "string", description: "El nombre de la etiqueta a buscar" },
+      tagName: {
+        type: "string",
+        description: "El nombre de la etiqueta a buscar",
+      },
     },
     required: ["tagName"],
   },
@@ -237,7 +244,8 @@ const getStoriesByTagSchema = {
 
 const getAllCategoriesSchema = {
   summary: "Obtiene todas las categorías disponibles",
-  description: "Devuelve una lista de todas las categorías de historias disponibles.",
+  description:
+    "Devuelve una lista de todas las categorías de historias disponibles.",
   tags: ["Stories", "Categories"],
   response: {
     200: {
@@ -258,7 +266,8 @@ const getAllCategoriesSchema = {
 
 const getAllTagsSchema = {
   summary: "Obtiene todas las etiquetas (tags) disponibles",
-  description: "Devuelve una lista de todas las etiquetas de historias disponibles.",
+  description:
+    "Devuelve una lista de todas las etiquetas de historias disponibles.",
   tags: ["Stories", "Tags"],
   response: {
     200: {
@@ -275,14 +284,6 @@ const getAllTagsSchema = {
       },
     },
   },
-};
-
-const authorIdParamSchema = {
-  type: "object",
-  properties: {
-    authorId: { type: "string", description: "ID del autor cuyas historias se desean obtener" },
-  },
-  required: ["authorId"],
 };
 
 export {

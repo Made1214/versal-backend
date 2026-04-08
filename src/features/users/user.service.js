@@ -25,7 +25,8 @@ async function getUserById({ userId, includeDeleted = false }) {
     throw new NotFoundError("Usuario no encontrado");
   }
 
-  const { password: _password, ...userSafe } = user;
+  const userSafe = { ...user };
+  delete userSafe.password;
   return userSafe;
 }
 
@@ -36,7 +37,8 @@ async function getUserByEmail(email, includeDeleted = false) {
     return null;
   }
 
-  const { password: _password, ...userSafe } = user;
+  const userSafe = { ...user };
+  delete userSafe.password;
   return userSafe;
 }
 

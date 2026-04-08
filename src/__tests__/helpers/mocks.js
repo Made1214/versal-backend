@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 /**
  * Crea un mock completo del cliente Prisma
@@ -158,7 +158,7 @@ export const createPrismaMock = () => ({
  * Crea un mock de bcrypt para hashing y comparación de contraseñas
  */
 export const createBcryptMock = () => ({
-  hash: vi.fn().mockResolvedValue('$2b$10$hashedPassword123'),
+  hash: vi.fn().mockResolvedValue("$2b$10$hashedPassword123"),
   compare: vi.fn().mockResolvedValue(true),
 });
 
@@ -168,10 +168,10 @@ export const createBcryptMock = () => ({
 export const createCryptoMock = () => ({
   createHash: vi.fn().mockReturnValue({
     update: vi.fn().mockReturnThis(),
-    digest: vi.fn().mockReturnValue('hashed-token-abc123'),
+    digest: vi.fn().mockReturnValue("hashed-token-abc123"),
   }),
   randomBytes: vi.fn().mockReturnValue({
-    toString: vi.fn().mockReturnValue('random-token-xyz789'),
+    toString: vi.fn().mockReturnValue("random-token-xyz789"),
   }),
 });
 
@@ -182,73 +182,73 @@ export const createStripeMock = () => ({
   checkout: {
     sessions: {
       create: vi.fn().mockResolvedValue({
-        id: 'cs_test_123456',
-        url: 'https://checkout.stripe.com/test/session',
-        customer: 'cus_test_123',
-        mode: 'payment',
+        id: "cs_test_123456",
+        url: "https://checkout.stripe.com/test/session",
+        customer: "cus_test_123",
+        mode: "payment",
         amount_total: 1000,
-        currency: 'usd',
+        currency: "usd",
         metadata: {},
       }),
     },
   },
   customers: {
     create: vi.fn().mockResolvedValue({
-      id: 'cus_test_123456',
-      email: 'test@example.com',
-      name: 'Test User',
+      id: "cus_test_123456",
+      email: "test@example.com",
+      name: "Test User",
     }),
     retrieve: vi.fn().mockResolvedValue({
-      id: 'cus_test_123456',
-      email: 'test@example.com',
+      id: "cus_test_123456",
+      email: "test@example.com",
     }),
   },
   subscriptions: {
     create: vi.fn().mockResolvedValue({
-      id: 'sub_test_123456',
-      customer: 'cus_test_123',
-      status: 'active',
-      metadata: { prismaUserId: 'user-123' },
+      id: "sub_test_123456",
+      customer: "cus_test_123",
+      status: "active",
+      metadata: { prismaUserId: "user-123" },
       items: {
-        data: [{ price: { id: 'price_test_123' } }],
+        data: [{ price: { id: "price_test_123" } }],
       },
     }),
     retrieve: vi.fn().mockResolvedValue({
-      id: 'sub_test_123456',
-      customer: 'cus_test_123',
-      status: 'active',
-      metadata: { prismaUserId: 'user-123' },
+      id: "sub_test_123456",
+      customer: "cus_test_123",
+      status: "active",
+      metadata: { prismaUserId: "user-123" },
       items: {
-        data: [{ price: { id: 'price_test_123' } }],
+        data: [{ price: { id: "price_test_123" } }],
       },
     }),
     update: vi.fn().mockResolvedValue({
-      id: 'sub_test_123456',
-      status: 'canceled',
+      id: "sub_test_123456",
+      status: "canceled",
     }),
   },
   paymentIntents: {
     create: vi.fn().mockResolvedValue({
-      id: 'pi_test_123456',
+      id: "pi_test_123456",
       amount: 1000,
-      currency: 'usd',
-      status: 'succeeded',
+      currency: "usd",
+      status: "succeeded",
     }),
     retrieve: vi.fn().mockResolvedValue({
-      id: 'pi_test_123456',
+      id: "pi_test_123456",
       amount: 1000,
-      currency: 'usd',
-      status: 'succeeded',
+      currency: "usd",
+      status: "succeeded",
     }),
   },
   balance: {
     retrieve: vi.fn().mockResolvedValue({
-      available: [{ amount: 100000, currency: 'usd' }],
-      pending: [{ amount: 0, currency: 'usd' }],
+      available: [{ amount: 100000, currency: "usd" }],
+      pending: [{ amount: 0, currency: "usd" }],
     }),
   },
   webhooks: {
-    constructEvent: vi.fn((payload, signature, secret) => {
+    constructEvent: vi.fn((payload, _signature, _secret) => {
       // Mock básico que retorna el payload como evento
       return JSON.parse(payload);
     }),
