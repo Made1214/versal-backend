@@ -16,7 +16,8 @@
     "prisma:generate": "npx prisma generate",
     "test": "cross-env NODE_ENV=test vitest run",
     "test:watch": "cross-env NODE_ENV=test vitest",
-    "test:ui": "cross-env NODE_ENV=test vitest --ui"
+    "test:ui": "cross-env NODE_ENV=test vitest --ui",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -48,6 +49,7 @@
     "eslint": "^10.2.0",
     "fastify-plugin": "^5.0.1",
     "globals": "^17.4.0",
+    "prettier": "^3.8.2",
     "prisma": "^6.19.2",
     "vitest": "^4.1.2"
   }
