@@ -1,6 +1,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -80,8 +81,8 @@ enum ReportTarget {
 model User {
   id                  String             @id @default(uuid())
   fullName            String
-  username            String             @unique
-  email               String             @unique
+  username            String             @unique @db.Citext
+  email               String             @unique @db.Citext
   password            String
   profileImage        String?
   profileImagePublicId  String?
@@ -130,7 +131,7 @@ model ChapterLike {
 
   @@unique([userId, chapterId])
   @@index([userId])
-  @@index([chapterId])
+  @@index([chapterId, createdAt])
 }
 
 model Rating {
@@ -192,6 +193,7 @@ model Story {
   @@index([authorId])
   @@index([categoryId])
   @@index([status])
+  @@index([status, updatedAt])
   @@index([createdAt])
 }
 
@@ -218,6 +220,7 @@ model Chapter {
   @@unique([storyId, chapterNumber])
   
   @@index([storyId])
+  @@index([storyId, status, chapterNumber])
   @@index([status])
 }
 
@@ -286,6 +289,7 @@ model Comment {
 
   likes CommentLike[]
 
+  @@index([chapterId, isDeleted, createdAt])
   @@index([chapterId])
   @@index([userId])
   @@index([parentId])
@@ -407,13 +411,14 @@ model Transaction {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      TransactionType
   status    TransactionStatus
-  amount    Float
+  amount    Decimal @db.Decimal(20, 2)
   currency  String
   metadata  Json? @db.JsonB
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@index([userId])
+  @@index([userId, createdAt])
   @@index([status])
   @@index([type])
 }
