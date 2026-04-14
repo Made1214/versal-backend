@@ -24,6 +24,7 @@ Use these rules for all tasks in this workspace.
 - Prefer Fastify logger over console.\* in application code.
 - Keep feature structure aligned: controller + service + routes + schema.
 - For Fastify backend work, prioritize the installed skill guidance in .agents/skills/fastify-best-practices/SKILL.md and its rules/\*.md as default implementation criteria.
+- For plans, opinions, or implementation decisions shared by the user, consult .agents/skills/critical-honest-advisor/SKILL.md and prioritize its guidance.
 
 ## Validation and Testing
 

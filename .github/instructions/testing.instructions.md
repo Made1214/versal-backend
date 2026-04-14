@@ -1,9 +1,9 @@
 ---
-description: "Use when creating or updating Vitest tests, mocks, fixtures, or test setup for backend features."
-name: "Testing Rules"
+description: 'Use when creating or updating Vitest tests, mocks, fixtures, or test setup for backend features.'
+name: 'Testing Rules'
 applyTo:
-  - "src/__tests__/**/*.js"
-  - "vitest.config.js"
+  - 'src/__tests__/**/*.js'
+  - 'vitest.config.js'
 ---
 
 # Testing Rules
