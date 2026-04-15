@@ -1,10 +1,11 @@
 // Versal/backend/app.js
 import fastifyLib from "fastify";
 
-const fastify = fastifyLib({ logger: true });
-
 // Configuración centralizada (valida env vars al cargar)
 import config from "./src/config/index.js";
+import loggerConfig from "./src/config/logger.js";
+
+const fastify = fastifyLib({ logger: loggerConfig });
 
 // Importar componentes de infraestructura
 import errorHandler from "./src/middlewares/errorHandler.js";

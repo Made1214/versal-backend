@@ -1,4 +1,4 @@
-import config from './index.js';
+import config from "./index.js";
 
 /**
  * Configuración del logger de Fastify (Pino)
@@ -6,20 +6,20 @@ import config from './index.js';
  */
 
 const loggerConfig = {
-  level: config.IS_PRODUCTION ? 'info' : 'debug',
-  
+  level: config.IS_PRODUCTION ? "info" : "debug",
+
   // En desarrollo, usar formato pretty para mejor legibilidad
   ...(config.IS_DEVELOPMENT && {
     transport: {
-      target: 'pino-pretty',
+      target: "pino-pretty",
       options: {
         colorize: true,
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname',
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
       },
     },
   }),
-  
+
   // En producción, usar formato JSON estructurado
   ...(config.IS_PRODUCTION && {
     formatters: {
@@ -28,7 +28,7 @@ const loggerConfig = {
       },
     },
   }),
-  
+
   // Serializers personalizados para objetos sensibles
   serializers: {
     req: (request) => ({
@@ -37,8 +37,8 @@ const loggerConfig = {
       headers: {
         ...request.headers,
         // No loguear headers sensibles
-        authorization: request.headers.authorization ? '[REDACTED]' : undefined,
-        cookie: request.headers.cookie ? '[REDACTED]' : undefined,
+        authorization: request.headers.authorization ? "[REDACTED]" : undefined,
+        cookie: request.headers.cookie ? "[REDACTED]" : undefined,
       },
     }),
     res: (reply) => ({
@@ -47,7 +47,9 @@ const loggerConfig = {
     err: (error) => ({
       type: error.constructor.name,
       message: error.message,
-      stack: config.IS_DEVELOPMENT ? error.stack : undefined,
+      stack: config.IS_DEVELOPMENT
+        ? error.stack?.split("\n").slice(0, 4).join("\n")
+        : undefined,
     }),
   },
 };
