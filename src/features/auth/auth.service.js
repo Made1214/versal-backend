@@ -1,5 +1,7 @@
+import bcrypt from "bcrypt";
 import crypto from "crypto";
 import * as userService from "../users/user.service.js";
+import * as userRepo from "../../repositories/user.repository.js";
 import * as authRepo from "../../repositories/auth.repository.js";
 import {
   NotFoundError,
@@ -8,11 +10,11 @@ import {
   ConflictError,
 } from "../../utils/errors.js";
 
-// Registra usuario usando userService.
+// Registra usuario.
 // - Comprueba que el email no exista y no esté eliminado.
 // - Devuelve objeto user (sin password) o lanza error.
 async function registerUser({ email, password, username, fullName }) {
-  const existing = await userService.getUserByEmail(email, true);
+  const existing = await userRepo.findByEmail(email);
   if (existing) {
     if (existing.isDeleted) {
       throw new ConflictError(
@@ -26,27 +28,41 @@ async function registerUser({ email, password, username, fullName }) {
     throw new ValidationError("El email no es válido.");
   }
 
-  const result = await userService.registerUser({
+  if (!userService.isValidPassword(password)) {
+    throw new ValidationError(
+      "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un carácter especial.",
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await userRepo.create({
     email,
-    password,
+    password: passwordHash,
     username,
     fullName,
   });
 
-  return result.user;
+  return user;
 }
 
 // Login de usuario.
 // - Comprueba user activo (no isDeleted) y credenciales.
 // - Devuelve user seguro (sin password) o lanza error.
 async function loginUser({ email, password }) {
-  const result = await userService.loginUser({ email, password });
+  const user = await userRepo.findByEmail(email);
 
-  if (!result || result.isDeleted) {
+  if (!user || user.isDeleted) {
     throw new UnauthorizedError("Credenciales inválidas.");
   }
 
-  return result;
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) {
+    throw new UnauthorizedError("Credenciales inválidas.");
+  }
+
+  const userSafe = { ...user };
+  delete userSafe.password;
+  return userSafe;
 }
 async function findOrCreateOAuthUser({
   email,
@@ -55,15 +71,29 @@ async function findOrCreateOAuthUser({
   provider,
   oauthId,
 }) {
-  const result = await userService.findOrCreateOAuthUser({
-    email,
-    fullName,
-    profileImage,
-    provider,
-    oauthId,
-  });
+  let user = await userRepo.findByOAuth(provider, oauthId);
 
-  return result.user;
+  if (!user) {
+    user = await userRepo.findByEmail(email);
+  }
+
+  if (user && user.isDeleted) {
+    throw new ConflictError(
+      "El email ya estaba asociado a una cuenta eliminada. Ponte en contacto con soporte si quieres recuperarla.",
+    );
+  }
+
+  if (!user) {
+    user = await userRepo.create({
+      email,
+      fullName,
+      profileImage,
+      oauthProvider: provider,
+      oauthId,
+    });
+  }
+
+  return user;
 }
 
 async function getGoogleProfile(accessToken) {

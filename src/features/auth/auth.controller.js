@@ -46,10 +46,10 @@ async function createAuthSession({ request, reply, user }) {
   }
 
   const payload = { userId: user.id, role };
-  const accessToken = request.jwtSign(payload, {
+  const accessToken = await reply.jwtSign(payload, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
-  const refreshToken = request.jwtSign(payload, {
+  const refreshToken = await reply.jwtSign(payload, {
     expiresIn: REFRESH_TOKEN_EXPIRY,
   });
 
@@ -151,7 +151,7 @@ async function refreshToken(request, reply) {
   await userService.getUserById({ userId: decoded.userId });
 
   const payload = { userId: decoded.userId, role };
-  const accessToken = request.jwtSign(payload, {
+  const accessToken = reply.jwtSign(payload, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
 

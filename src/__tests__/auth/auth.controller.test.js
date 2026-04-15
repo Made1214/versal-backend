@@ -51,6 +51,9 @@ describe("Auth Controller", () => {
     };
 
     reply = {
+      jwtSign: vi.fn(
+        (payload, options) => `${payload.userId}-${options.expiresIn}`,
+      ),
       setCookie: vi.fn().mockReturnThis(),
       code: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
